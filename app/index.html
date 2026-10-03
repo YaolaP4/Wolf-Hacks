@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pinchpoint</title>
+  <meta name="description" content="Choose which road-stream culverts to replace under a budget so North Carolina's rivers reconnect and its roads survive the next flood." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap" rel="stylesheet" />
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <link href="./styles.css" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M2 20c6-8 10 4 14-4s8 4 14-4' fill='none' stroke='%231C7FC1' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='13' y='6' width='6' height='20' rx='1' fill='%239A6B43'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="app">
+    <aside class="panel" aria-label="Plan controls and results">
+      <header class="brand">
+        <h1 class="wordmark">Pinchpoint</h1>
+        <p class="tagline">Where roads squeeze rivers through a pipe. Fix the right ones first.</p>
+      </header>
+
+      <section class="controls" aria-label="Plan settings">
+        <label class="field" for="shed">
+          <span class="field-label">Watershed</span>
+          <select id="shed"></select>
+        </label>
+
+        <div class="field" id="budget-field">
+          <div class="field-row">
+            <label class="field-label" for="budget">Budget</label>
+            <output id="budget-out" for="budget" class="field-value">$2.0M</output>
+          </div>
+          <input id="budget" type="range" min="0" max="23" step="1" value="7" />
+        </div>
+
+        <div class="field" id="lam-field">
+          <div class="field-row">
+            <label class="field-label" for="lam">Protect</label>
+            <output id="lam-out" for="lam" class="field-value">Rivers only</output>
+          </div>
+          <input id="lam" type="range" min="0" max="10" step="1" value="0" />
+          <div class="ends"><span>Rivers</span><span>Roads</span></div>
+        </div>
+      </section>
+
+      <section class="results" id="results" aria-live="polite">
+        <table class="compare">
+          <caption class="sr-only">Network-aware plan compared with ranking culverts one at a time</caption>
+          <thead>
+            <tr><th scope="col"></th><th scope="col" class="c-plan">Network-aware</th><th scope="col" class="c-base">One at a time</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">River reconnected</th><td id="r-miles-p"></td><td id="r-miles-b"></td></tr>
+            <tr><th scope="row">Washout risk removed</th><td id="r-flood-p"></td><td id="r-flood-b"></td></tr>
+            <tr><th scope="row">Culverts replaced</th><td id="r-n-p"></td><td id="r-n-b"></td></tr>
+            <tr><th scope="row">Spent</th><td id="r-cost-p"></td><td id="r-cost-b"></td></tr>
+          </tbody>
+        </table>
+        <p class="verdict" id="verdict"></p>
+        <figure class="curve">
+          <svg id="curve" role="img" aria-labelledby="curve-title" viewBox="0 0 360 150"></svg>
+          <figcaption id="curve-title">River miles reconnected as the budget grows. The shaded gap is what one-at-a-time ranking leaves behind.</figcaption>
+        </figure>
+        <label class="toggle"><input type="checkbox" id="show-base" checked /> Show the one-at-a-time plan on the map</label>
+        <div class="stress">
+          <button type="button" id="stress" class="btn-quiet">Stress-test costs</button>
+          <span id="stress-out" class="stress-out">Re-solve with 60 random cost scenarios.</span>
+        </div>
+      </section>
+
+      <section class="plan" aria-label="Culverts in the plan">
+        <h2 class="section-title">The plan</h2>
+        <ol id="plan-list" class="plan-list"></ol>
+      </section>
+
+      <footer class="panel-foot">
+        <button type="button" class="link" id="open-methods">Methods and validation</button>
+        <span>Data: National Aquatic Barrier Inventory, USGS NHDPlus HR, OpenStreetMap</span>
+      </footer>
+    </aside>
+
+    <main class="map-wrap">
+      <div id="map" role="application" aria-label="Map of culverts and streams"></div>
+      <div class="map-tools">
+        <button type="button" id="start-tour" class="btn">Tour</button>
+        <button type="button" id="open-methods-2" class="btn">Methods</button>
+      </div>
+      <div class="legend" aria-label="Legend">
+        <div class="lg"><span class="sw sw-plan"></span>Replaced in network-aware plan</div>
+        <div class="lg lg-base"><span class="sw sw-base"></span>Replaced if ranked one at a time</div>
+        <div class="lg"><span class="sw sw-none"></span>Assessed barrier, not replaced</div>
+        <div class="lg"><span class="ln ln-open"></span>River reconnected</div>
+        <div class="lg lg-base"><span class="ln ln-base"></span>Reconnected only by ranking</div>
+      </div>
+    </main>
+  </div>
+
+  <div class="intro" id="intro" role="dialog" aria-modal="true" aria-labelledby="intro-title">
+    <div class="intro-card">
+      <h2 id="intro-title" class="intro-head">Every road that crosses a stream squeezes it through a pipe.</h2>
+      <p>When Hurricane Helene hit western North Carolina, <strong>852 culverts</strong> were among the 8,795 damaged road sites, part of a transportation recovery NCDOT now puts near <strong>$5.8 billion</strong>.</p>
+      <p>Undersized culverts fail twice. In floods they plug and wash the road out. The rest of the time they wall rivers off from the fish downstream. Culverts built to stream width fix both, and they came through Tropical Storm Irene intact where undersized pipes failed.</p>
+      <p>Money to replace them is limited. Pinchpoint chooses which ones to replace, treating the river as a network instead of ranking pipes one at a time.</p>
+      <div class="intro-actions">
+        <button type="button" class="btn btn-primary" id="intro-tour">Take the 60-second tour</button>
+        <button type="button" class="btn" id="intro-skip">Explore the map</button>
+      </div>
+      <p class="intro-src">Sources: NCDOT damage assessment via Blue Ridge Public Radio (Jun 2025); NC Newsline; Gillespie et al. 2014, <i>Fisheries</i> 39(2):62–76.</p>
+    </div>
+  </div>
+
+  <div class="tour" id="tour" role="dialog" aria-live="polite" hidden>
+    <p class="tour-step" id="tour-step"></p>
+    <p class="tour-text" id="tour-text"></p>
+    <div class="tour-actions">
+      <button type="button" class="link" id="tour-close">End tour</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="tour-back">Back</button>
+      <button type="button" class="btn btn-primary" id="tour-next">Next</button>
+    </div>
+  </div>
+
+  <dialog class="methods" id="methods" aria-labelledby="methods-title">
+    <div class="methods-body" id="methods-body"></div>
+    <form method="dialog"><button class="btn" value="close">Close</button></form>
+  </dialog>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/maplibre-contour@0.1.1/dist/index.min.js"></script>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

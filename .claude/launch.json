@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pinchpoint",
+      "runtimeExecutable": "C:/Users/Yaola/Wolf-Hacks/.venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "http.server", "8765", "--directory", "C:/Users/Yaola/Wolf-Hacks/app"],
+      "port": 8765
+    }
+  ]
+}

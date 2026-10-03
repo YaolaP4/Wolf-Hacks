@@ -1,0 +1,131 @@
+{
+  "watersheds": 10,
+  "culverts": 705,
+  "unit_usd": 25000,
+  "by_budget": {
+    "$1M per watershed": {
+      "miles_optimal": 828.0,
+      "miles_rank_gain": 819.1,
+      "miles_rank_ratio": 821.2,
+      "x_vs_rank_gain": 1.01,
+      "x_vs_rank_ratio": 1.01,
+      "inventory_gain_optimal": 828.0,
+      "inventory_gain_rank_gain": 819.91,
+      "inventory_gain_rank_ratio": 822.33,
+      "watersheds_optimal_beats_rank_gain_by_10pct": 1,
+      "median_stranded_share_rank_gain": 0.0,
+      "mean_stranded_share_rank_gain": 0.028
+    },
+    "$2M per watershed": {
+      "miles_optimal": 1013.4,
+      "miles_rank_gain": 1002.9,
+      "miles_rank_ratio": 1008.2,
+      "x_vs_rank_gain": 1.01,
+      "x_vs_rank_ratio": 1.01,
+      "inventory_gain_optimal": 1013.4,
+      "inventory_gain_rank_gain": 1006.06,
+      "inventory_gain_rank_ratio": 1013.15,
+      "watersheds_optimal_beats_rank_gain_by_10pct": 1,
+      "median_stranded_share_rank_gain": 0.0,
+      "mean_stranded_share_rank_gain": 0.034
+    },
+    "$5M per watershed": {
+      "miles_optimal": 1255.9,
+      "miles_rank_gain": 1234.3,
+      "miles_rank_ratio": 1238.8,
+      "x_vs_rank_gain": 1.02,
+      "x_vs_rank_ratio": 1.01,
+      "inventory_gain_optimal": 1255.9,
+      "inventory_gain_rank_gain": 1248.15,
+      "inventory_gain_rank_ratio": 1254.77,
+      "watersheds_optimal_beats_rank_gain_by_10pct": 0,
+      "median_stranded_share_rank_gain": 0.0,
+      "mean_stranded_share_rank_gain": 0.027
+    },
+    "$10M per watershed": {
+      "miles_optimal": 1414.7,
+      "miles_rank_gain": 1391.7,
+      "miles_rank_ratio": 1386.9,
+      "x_vs_rank_gain": 1.02,
+      "x_vs_rank_ratio": 1.02,
+      "inventory_gain_optimal": 1414.77,
+      "inventory_gain_rank_gain": 1418.89,
+      "inventory_gain_rank_ratio": 1416.12,
+      "watersheds_optimal_beats_rank_gain_by_10pct": 0,
+      "median_stranded_share_rank_gain": 0.0,
+      "mean_stranded_share_rank_gain": 0.031
+    }
+  },
+  "cost_monte_carlo_$5M": {
+    "draws": 200,
+    "sigma_lognormal": 0.5,
+    "x_vs_rank_gain_p5_p50_p95": [
+      1.03,
+      1.04,
+      1.06
+    ],
+    "x_vs_rank_ratio_p5_p50_p95": [
+      1.01,
+      1.02,
+      1.02
+    ],
+    "share_draws_optimal_better_than_rank_gain": 1.0
+  },
+  "showcase_pareto_$5M": [
+    {
+      "lam": 0.0,
+      "miles": 95.85,
+      "flood": 3.273
+    },
+    {
+      "lam": 0.1,
+      "miles": 95.77,
+      "flood": 3.32
+    },
+    {
+      "lam": 0.2,
+      "miles": 95.77,
+      "flood": 3.32
+    },
+    {
+      "lam": 0.3,
+      "miles": 95.77,
+      "flood": 3.32
+    },
+    {
+      "lam": 0.4,
+      "miles": 95.77,
+      "flood": 3.32
+    },
+    {
+      "lam": 0.5,
+      "miles": 95.77,
+      "flood": 3.32
+    },
+    {
+      "lam": 0.6,
+      "miles": 92.87,
+      "flood": 3.442
+    },
+    {
+      "lam": 0.7,
+      "miles": 87.42,
+      "flood": 3.608
+    },
+    {
+      "lam": 0.8,
+      "miles": 82.41,
+      "flood": 3.709
+    },
+    {
+      "lam": 0.9,
+      "miles": 71.73,
+      "flood": 3.818
+    },
+    {
+      "lam": 1.0,
+      "miles": 63.4,
+      "flood": 3.854
+    }
+  ]
+}
