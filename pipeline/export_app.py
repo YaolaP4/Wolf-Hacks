@@ -42,6 +42,8 @@ def main() -> None:
     robust_path = ROOT / "results" / f"robustness_{SHOWCASE}.json"
     robust = json.loads(robust_path.read_text()) if robust_path.exists() else {}
 
+    dams = pd.read_csv(ROOT / "data" / "raw" / "nabi_dams_NC.csv", usecols=["sarpid", "lat", "lon", "name"], low_memory=False)
+    dam_xy = {r.sarpid: (round(r.lon, 6), round(r.lat, 6), r.name if isinstance(r.name, str) else None) for r in dams.itertuples()}
     culverts = []
     for r in df.itertuples():
         culverts.append({
@@ -62,6 +64,17 @@ def main() -> None:
             "trout": clean(r.trout), "tespp": int(r.tespp) if not pd.isna(r.tespp) else 0,
             "nhdplusid": int(r.nhdplusid) if not pd.isna(r.nhdplusid) else None,
             "robust": robust.get(r.sarpid),
+            "ebtMiles": clean(round(r.easternbrooktrouthabitatupstreammiles, 2)) if r.easternbrooktrouthabitatupstreammiles > 0 else None,
+            "natural": clean(r.landcover) if r.landcover >= 0 else None,
+            "unaltered": clean(r.percentunaltered) if r.percentunaltered >= 0 else None,
+            "flowCfs": clean(round(r.annualflow, 1)) if r.annualflow > 0 else None,
+            "sgcn": int(r.statesgcnspp) if r.statesgcnspp > 0 else 0,
+            "surveyed": int(r.yearsurveyed) if r.yearsurveyed > 0 else None,
+            "condition": clean(r.condition),
+            "slides2mi": int(r.helene_slides_2mi) if r.helene_slides_2mi == r.helene_slides_2mi else None,
+            "slideMi": clean(r.helene_nearest_slide_mi),
+            "anchorXY": list(dam_xy[r.downstreambarriersarpid][:2]) if not isinstance(r.parent, str) and r.downstreambarriersarpid in dam_xy else None,
+            "anchorName": dam_xy[r.downstreambarriersarpid][2] if not isinstance(r.parent, str) and r.downstreambarriersarpid in dam_xy else None,
             "url": clean(r.url),
         })
     (APP / "culverts.json").write_text(json.dumps(culverts, separators=(",", ":")))

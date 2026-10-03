@@ -110,6 +110,21 @@ def main() -> None:
     cand["flood_consequence"] = road.map(ROAD_CONSEQUENCE).to_numpy()
     cand["flood_risk"] = (cand.flood_constriction * cand.flood_load * cand.flood_consequence).round(4)
 
+    # USGS preliminary inventory of landslides triggered by Hurricane Helene (doi:10.5066/P14CHGKS)
+    slides_path = RAW / "helene_landslides.geojson"
+    if slides_path.exists():
+        import geopandas as gpd
+        slides = gpd.read_file(slides_path).to_crs(5070)
+        pts = gpd.GeoSeries(gpd.points_from_xy(cand.lon, cand.lat), crs=4326).to_crs(5070)
+        sx, sy = slides.geometry.x.to_numpy(), slides.geometry.y.to_numpy()
+        px, py = pts.x.to_numpy(), pts.y.to_numpy()
+        d = np.sqrt((px[:, None] - sx[None, :]) ** 2 + (py[:, None] - sy[None, :]) ** 2)
+        cand["helene_slides_2mi"] = (d <= 3218.7).sum(axis=1)
+        cand["helene_nearest_slide_mi"] = (d.min(axis=1) / 1609.34).round(2)
+    else:
+        cand["helene_slides_2mi"] = np.nan
+        cand["helene_nearest_slide_mi"] = np.nan
+
     keep = [
         "sarpid", "lat", "lon", "name", "river", "road", "roadtype", "crossingtype", "barrierseverity", "constriction",
         "huc8", "subbasin", "huc12", "subwatershed", "county", "totdasqkm", "streamorder", "trout", "tespp",
@@ -117,6 +132,9 @@ def main() -> None:
         "gainmiles", "milestooutlet", "downstreambarriersarpid", "downstreambarrier", "parent", "anchor_kind",
         "tree_root", "anchor_miles", "span_ft", "cost_usd", "flood_constriction", "flood_load", "flood_consequence",
         "flood_risk", "nhdplusid", "url",
+        # detail for the flyover narration
+        "easternbrooktrouthabitatupstreammiles", "landcover", "percentunaltered", "annualflow", "statesgcnspp",
+        "yearsurveyed", "condition", "helene_slides_2mi", "helene_nearest_slide_mi",
     ]
     cand[keep].to_csv(OUT / "culverts_nc.csv", index=False)
     print(f"wrote {len(cand)} candidate culverts in {cand.huc8.nunique()} HUC8s; "

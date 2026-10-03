@@ -1,4 +1,5 @@
 import { solve, evaluate, rankPlan, normalizers } from "./solver.js";
+import { startFlyover } from "./flyover.js";
 
 const UNIT = 25_000; // dollars per solver cost unit
 const BUDGETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20];
@@ -337,6 +338,7 @@ async function loadStreams(huc) {
   if (streamsLoaded !== huc) return;
   map.getSource("streams").setData(gj || { type: "FeatureCollection", features: [] });
   DATA.hasStreams = !!gj;
+  DATA.streamsGeo = gj;
   renderMap(compute());
 }
 
@@ -408,6 +410,7 @@ function sheetHTML(r, id) {
       <dt>Washout risk</dt><dd>${bars(rec.flood)} ${rec.flood.toFixed(2)}</dd>
       <dt>Planning cost</dt><dd>${money(rec.cost)} <span style="color:var(--muted);font-weight:400">(${money(rec.cost * 0.44)}–${money(rec.cost * 2.28)})</span></dd>
     </dl>
+    <div class="sheet-fly"><button type="button" class="btn btn-primary fly-btn" data-fly="${esc(id)}">Fly to this culvert</button></div>
     <div class="sheet-foot"><span class="sheet-formula">Washout risk = squeeze ${fc.toFixed(2)} × flow ${fl.toFixed(2)} × road ${fq.toFixed(2)}</span>${rec.url ? `<a href="${esc(rec.url)}" target="_blank" rel="noopener">Open the inventory record</a>` : ""}</div>
   </div>`;
 }
@@ -421,6 +424,7 @@ function selectCulvert(id, fly) {
   popup = new maplibregl.Popup({ maxWidth: "320px", offset: 12, focusAfterOpen: false })
     .setLngLat([d.rec.lon, d.rec.lat]).setHTML(sheetHTML(r, id)).addTo(map);
   popup.on("close", () => { if (state.selected === id) { state.selected = null; renderMap(compute()); } });
+  popup.getElement().querySelector(".fly-btn")?.addEventListener("click", () => flyover(id));
   if (fly) map.flyTo({ center: [d.rec.lon, d.rec.lat], zoom: Math.max(map.getZoom(), 12.2), offset: [0, -170], duration: reduceMotion ? 0 : 1200 });
   renderMap(r);
 }
@@ -503,6 +507,68 @@ function setState(patch, opts = {}) {
   if (opts.fit && map) map.fitBounds(bboxOf(state.huc), { padding: 40, duration: reduceMotion ? 0 : 900 });
   history.replaceState(null, "", `#huc=${state.huc}&b=${BUDGETS[state.bi]}&p=${state.lam}`);
   return r;
+}
+
+/* ---------- flyover ---------- */
+let pulseTimer = null;
+function ensureCineLayers() {
+  if (map.getSource("cine-pt")) return;
+  map.addSource("cine-pt", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+  map.addSource("cine-mark", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+  map.addLayer({ id: "cine-pulse", type: "circle", source: "cine-pt", paint: { "circle-radius": 10, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#ffffff", "circle-stroke-width": 2.5, "circle-stroke-opacity": 0.9 } });
+  map.addLayer({ id: "cine-mark", type: "circle", source: "cine-mark", paint: { "circle-radius": 9, "circle-color": "#ffffff", "circle-stroke-color": "#9a6b43", "circle-stroke-width": 3 } });
+}
+function pulse(at, on) {
+  ensureCineLayers();
+  clearInterval(pulseTimer);
+  map.getSource("cine-pt").setData({ type: "FeatureCollection", features: on && at ? [{ type: "Feature", geometry: { type: "Point", coordinates: at }, properties: {} }] : [] });
+  if (!on || reduceMotion) return;
+  let t = 0;
+  pulseTimer = setInterval(() => {
+    t = (t + 0.04) % 1;
+    if (!map.getLayer("cine-pulse")) return;
+    map.setPaintProperty("cine-pulse", "circle-radius", 10 + 26 * t);
+    map.setPaintProperty("cine-pulse", "circle-stroke-opacity", 0.95 * (1 - t));
+  }, 40);
+}
+function mark(at) {
+  ensureCineLayers();
+  map.getSource("cine-mark").setData({ type: "FeatureCollection", features: at ? [{ type: "Feature", geometry: { type: "Point", coordinates: at }, properties: {} }] : [] });
+}
+
+function flyover(id) {
+  if (popup) popup.remove();
+  showTour(-1);
+  const r = compute();
+  const { s, plan, base, planSet } = r;
+  const d = s.byId.get(id);
+  if (!d) return;
+  // chain: this culvert plus every candidate culvert between it and its anchor
+  const chain = [id];
+  let x = d.parent;
+  while (x && s.byId.has(x)) { chain.push(x); x = s.byId.get(x).parent; }
+  const chainEval = evaluate(s.items, chain);
+  const order = [...s.items].sort((a, b) => soloScore(s, state.lam)(b) - soloScore(s, state.lam)(a));
+  const sol = solution(s, state.lam);
+  let enter = null;
+  for (let bi = state.bi + 1; bi < BUDGETS.length && !enter; bi++) {
+    if (sol.plan(Math.round((BUDGETS[bi] * 1e6) / UNIT)).includes(id)) enter = money(BUDGETS[bi] * 1e6);
+  }
+  const pts = s.recs.filter((q) => plan.open.has(q.id) || q.id === id);
+  const lons = pts.map((q) => q.lon), lats = pts.map((q) => q.lat);
+  startFlyover({
+    map, rec: d.rec, streams: DATA.streamsGeo, shedName: s.meta.name, money,
+    colors: { trace: "#7fe3ff", traceGlow: "#2fb6ff", xs: { water: "#3b9ee6", waterDeep: "#1c6fb3", ink: "#1e292d", muted: "#6e7a77", road: "#4a4f55", soil: "#8a7358", accent: "#d9442b", paper: "#f2f4ef" } },
+    plan: {
+      inPlan: planSet.has(id), n: plan.n, miles: plan.miles, floodPct: Math.round((plan.flood / s.F) * 100), delta: plan.miles - base.miles,
+      budget: money(budgetUsd()), lam: lamLabel(state.lam).toLowerCase(), rank: order.findIndex((q) => q.id === id) + 1, N: s.items.length, enter,
+      parent: d.parent && s.byId.has(d.parent) ? s.byId.get(d.parent).rec : null,
+      chainCount: chain.length - 1, chainMiles: chainEval.miles, chainCost: chain.reduce((t, c) => t + s.byId.get(c).rec.cost, 0),
+    },
+    planBounds: () => ({ bounds: [[Math.min(...lons) - 0.02, Math.min(...lats) - 0.02], [Math.max(...lons) + 0.02, Math.max(...lats) + 0.02]] }),
+    pulse, mark,
+    onExit: () => renderMap(compute()),
+  });
 }
 
 /* ---------- tour ---------- */
@@ -667,6 +733,12 @@ async function boot() {
   $("#open-methods").addEventListener("click", openMethods);
   $("#open-methods-2").addEventListener("click", openMethods);
   $("#start-tour").addEventListener("click", () => showTour(0));
+  $("#start-fly").addEventListener("click", () => {
+    const r = compute();
+    const k = keystone(r);
+    const pick = k ? k.id : [...r.plan.open].sort((a, b) => r.s.byId.get(b).habitat - r.s.byId.get(a).habitat)[0];
+    if (pick) flyover(pick);
+  });
   $("#intro-tour").addEventListener("click", () => { $("#intro").hidden = true; showTour(0); });
   $("#intro-skip").addEventListener("click", () => { $("#intro").hidden = true; });
   $("#tour-next").addEventListener("click", () => showTour(tourAt + 1 < TOUR.length ? tourAt + 1 : -1));
@@ -680,7 +752,7 @@ async function boot() {
     container: "map", style: buildStyle(demConfig()), bounds: bboxOf(state.huc),
     fitBoundsOptions: { padding: 40 }, dragRotate: false, pitchWithRotate: false, attributionControl: { compact: true },
   });
-  window.pinchpoint = { map, state, compute, select: (id) => selectCulvert(id, true) };
+  window.pinchpoint = { map, state, compute, select: (id) => selectCulvert(id, true), flyover: (id) => flyover(id) };
   map.on("error", (e) => console.warn("map error:", e.error?.message || e));
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-left");
   map.addControl(new maplibregl.ScaleControl({ unit: "imperial" }), "bottom-right");

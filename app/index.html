@@ -83,6 +83,7 @@
     <main class="map-wrap">
       <div id="map" role="application" aria-label="Map of culverts and streams"></div>
       <div class="map-tools">
+        <button type="button" id="start-fly" class="btn btn-primary">Flyover</button>
         <button type="button" id="start-tour" class="btn">Tour</button>
         <button type="button" id="open-methods-2" class="btn">Methods</button>
       </div>
@@ -119,6 +120,32 @@
       <span class="spacer"></span>
       <button type="button" class="btn" id="tour-back">Back</button>
       <button type="button" class="btn btn-primary" id="tour-next">Next</button>
+    </div>
+  </div>
+
+  <div class="cine" id="cine" hidden>
+    <div class="cine-top">
+      <div class="cine-title"><span id="cine-stream" class="cine-stream"></span><span id="cine-road" class="cine-road"></span></div>
+      <button type="button" id="cine-exit" class="cine-btn">Exit flyover</button>
+    </div>
+    <aside class="cine-facts" id="cine-facts" aria-live="polite"></aside>
+    <div class="cine-xs" id="cine-xs" hidden>
+      <p class="cine-xs-head" id="cine-xs-head"></p>
+      <div class="cine-xs-svg" id="cine-xs-svg"></div>
+      <p class="cine-xs-note" id="cine-xs-note"></p>
+    </div>
+    <div class="cine-bottom">
+      <p class="cine-scene" id="cine-scene"></p>
+      <p class="cine-caption" id="cine-caption" aria-live="polite"></p>
+      <div class="cine-controls">
+        <div class="cine-progress" id="cine-progress"></div>
+        <div class="cine-buttons">
+          <button type="button" id="cine-back" class="cine-btn">Back</button>
+          <button type="button" id="cine-play" class="cine-btn">Pause</button>
+          <button type="button" id="cine-next" class="cine-btn">Next</button>
+          <label class="cine-voice"><input type="checkbox" id="cine-voice" checked /> Narration</label>
+        </div>
+      </div>
     </div>
   </div>
 
