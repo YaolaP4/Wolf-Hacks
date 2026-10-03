@@ -1,5 +1,6 @@
 """Export compact JSON for the web app (app/data/)."""
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -9,6 +10,25 @@ ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "app" / "data"
 APP.mkdir(parents=True, exist_ok=True)
 SHOWCASE = 6010105
+UNIT = 25_000
+BUDGETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from analyze import build_nodes  # noqa: E402
+from optimizer import evaluate, rank_plan, solve  # noqa: E402
+
+
+def planning_gain(g: pd.DataFrame) -> dict:
+    """River miles for network-aware vs one-at-a-time plans at every app budget (rivers only)."""
+    g = g.reset_index(drop=True)
+    nodes = build_nodes(g)
+    sol = solve(nodes, int(BUDGETS[-1] * 1e6 / UNIT), 0.0)
+    gain = dict(zip(g.sarpid, g.gainmiles))
+    opt, rank = [], []
+    for b in BUDGETS:
+        u = int(round(b * 1e6 / UNIT))
+        opt.append(round(evaluate(nodes, sol.plan(u))["habitat_miles"], 2))
+        rank.append(round(evaluate(nodes, rank_plan(nodes, u, gain))["habitat_miles"], 2))
+    return {"opt": opt, "rank": rank}
 
 
 def clean(x):
@@ -55,6 +75,7 @@ def main() -> None:
                      round(float(g.lon.quantile(0.95)), 4), round(float(g.lat.quantile(0.95)), 4)] if len(g) >= 20 else None,
             "chains": int(g.parent.notna().sum()),
             "miles": round(float(g.totalupstreammiles.sum()), 1),
+            **planning_gain(g),
         })
     sheds.sort(key=lambda s: -s["n"])
     (APP / "watersheds.json").write_text(json.dumps(sheds, separators=(",", ":")))

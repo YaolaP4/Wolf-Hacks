@@ -248,6 +248,23 @@ function bboxOf(huc) {
   return [[b[0], b[1]], [b[2], b[3]]];
 }
 
+// Watershed shading: how much network-aware planning adds over ranking at the current budget.
+const gainKey = () => `g${state.bi}`;
+function hucFillColor() {
+  return ["interpolate", ["linear"], ["coalesce", ["get", gainKey()], 0], 0, "#7b878a", 0.02, "#b9d6ea", 0.15, "#5aa3d6", 0.5, "#1c6aa8"];
+}
+function hucFillOpacity() {
+  return ["case", ["==", ["get", "huc8"], state.huc], 0, ["interpolate", ["linear"], ["coalesce", ["get", gainKey()], 0], 0, 0.06, 0.02, 0.2, 0.5, 0.45]];
+}
+function decorateHucs() {
+  const byHuc = new Map(DATA.sheds.map((x) => [x.huc8, x]));
+  for (const f of DATA.hucGeo.features) {
+    const m = byHuc.get(f.properties.huc8);
+    if (!m || !m.opt) continue;
+    m.opt.forEach((o, i) => { f.properties[`g${i}`] = Math.max(0, (o - m.rank[i]) / Math.max(m.rank[i], 1)); });
+  }
+}
+
 function addDataLayers() {
   const empty = { type: "FeatureCollection", features: [] };
   map.addSource("huc", { type: "geojson", data: DATA.hucGeo });
@@ -256,7 +273,7 @@ function addDataLayers() {
   map.addSource("culverts", { type: "geojson", data: empty });
   map.addSource("sel", { type: "geojson", data: empty });
   const before = "labels-place";
-  map.addLayer({ id: "huc-fill", type: "fill", source: "huc", paint: { "fill-color": "#4f5d61", "fill-opacity": 0.07 } }, before);
+  map.addLayer({ id: "huc-fill", type: "fill", source: "huc", paint: { "fill-color": hucFillColor(), "fill-opacity": hucFillOpacity() } }, before);
   map.addLayer({ id: "huc-line", type: "line", source: "huc", paint: { "line-color": "#3c4a4e", "line-width": 0.8, "line-opacity": 0.6 } }, before);
   map.addLayer({ id: "huc-sel", type: "line", source: "huc", filter: ["==", ["get", "huc8"], state.huc], paint: { "line-color": "#1e292d", "line-width": 2.4 } }, before);
   const w = (base) => ["interpolate", ["linear"], ["zoom"], 8, ["*", base, ["interpolate", ["linear"], ["get", "o"], 1, 0.35, 6, 1.4]], 13, ["*", base * 2.2, ["interpolate", ["linear"], ["get", "o"], 1, 0.6, 6, 2.2]]];
@@ -281,6 +298,18 @@ function addDataLayers() {
   map.on("click", "culverts", (e) => selectCulvert(e.features[0].properties.id, false));
   map.on("mouseenter", "culverts", () => (map.getCanvas().style.cursor = "pointer"));
   map.on("mouseleave", "culverts", () => (map.getCanvas().style.cursor = ""));
+  const tip = new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: "huc-tip", offset: 8 });
+  map.on("mousemove", "huc-fill", (e) => {
+    if (map.queryRenderedFeatures(e.point, { layers: ["culverts"] }).length) { tip.remove(); return; }
+    const h = e.features[0].properties.huc8;
+    const m = DATA.sheds.find((x) => x.huc8 === h);
+    if (!m) return;
+    const o = m.opt[state.bi], q = m.rank[state.bi];
+    const g = q > 0 ? Math.round(((o - q) / q) * 100) : 0;
+    const what = o - q > 0.05 ? `Network planning adds ${(o - q).toFixed(1)} river miles at ${money(budgetUsd())} (${q.toFixed(1)} → ${o.toFixed(1)}${q > 0 ? `, +${g}%` : ""}).` : `At ${money(budgetUsd())}, ranking one at a time does as well here (${o.toFixed(1)} mi).`;
+    tip.setLngLat(e.lngLat).setHTML(`<b>${esc(m.name)}</b>, ${m.n} assessed culverts<br>${what}${h !== state.huc ? "<br><span class=\"tip-hint\">Click to open</span>" : ""}`).addTo(map);
+  });
+  map.on("mouseleave", "huc-fill", () => tip.remove());
   map.on("click", "huc-fill", (e) => {
     if (map.queryRenderedFeatures(e.point, { layers: ["culverts"] }).length) return;
     const h = e.features[0].properties.huc8;
@@ -326,6 +355,8 @@ function renderMap(r) {
   for (const id of ["streams-glow", "streams-open", "streams-flow"]) map.setFilter(id, ["in", ["get", "net"], ["literal", open]]);
   map.setFilter("streams-baseonly", ["in", ["get", "net"], ["literal", baseOnly]]);
   map.setFilter("huc-sel", ["==", ["get", "huc8"], state.huc]);
+  map.setPaintProperty("huc-fill", "fill-color", hucFillColor());
+  map.setPaintProperty("huc-fill", "fill-opacity", hucFillOpacity());
   const links = DATA.hasStreams ? [] : s.recs.filter((d) => d.parent && s.byId.has(d.parent)).map((d) => {
     const p = s.byId.get(d.parent).rec;
     return { type: "Feature", geometry: { type: "LineString", coordinates: [[d.lon, d.lat], [p.lon, p.lat]] }, properties: { open: plan.open.has(d.id) } };
@@ -425,12 +456,35 @@ function runStress() {
     for (const [k, v] of freq) freq.set(k, v / N);
     const r = compute();
     const robust = [...r.planSet].filter((id) => (freq.get(id) || 0) >= 0.8).length;
-    const summary = `Better than ranking in ${wins} of ${N} cost scenarios${ties ? ` (tied in ${ties})` : ""}. ${robust} of ${r.planSet.size} picks hold in at least 80% of them.`;
+    const summary = `Beat ranking in ${wins} of ${N} cost scenarios${ties ? ` (tied in ${ties})` : ""}. ${robust} of ${r.planSet.size} picks stayed in the plan in at least 80% of them${robust < r.planSet.size / 2 ? ", so get real costs before committing to specific culverts" : ""}.`;
     state.stress = { key, freq, wins, summary };
     btn.disabled = false;
     renderPanel(r);
   };
   step();
+}
+
+/* ---------- export ---------- */
+function exportPlan() {
+  const r = compute();
+  const { s, planIds, plan, baseSet } = r;
+  const cols = ["order", "inventory_id", "stream", "road", "road_type", "county", "lat", "lon", "field_assessment", "constriction",
+    "drainage_sq_mi", "river_above_mi", "river_below_mi", "reconnects_to_river_below", "in_one_at_a_time_plan", "planning_cost_usd",
+    "cost_low_usd", "cost_high_usd", "washout_score", "inventory_url"];
+  const q = (v) => (v == null ? "" : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
+  const rows = planIds.map((id, i) => {
+    const d = s.byId.get(id).rec;
+    return [i + 1, d.id, streamName(d), d.road || "", d.roadType || "", d.county || "", d.lat, d.lon, d.severity, d.constriction || "",
+      d.daSqKm != null ? (d.daSqKm / 2.59).toFixed(3) : "", d.up, d.down, plan.open.has(id) ? "yes" : "no", baseSet.has(id) ? "yes" : "no",
+      d.cost, Math.round(d.cost * 0.44), Math.round(d.cost * 2.28), d.flood, d.url || ""].map(q).join(",");
+  });
+  const meta = `# Pinchpoint plan: ${s.meta.name} (HUC8 ${s.huc}), budget ${money(budgetUsd())}, ${lamLabel(state.lam)}. River reconnected ${plan.miles.toFixed(1)} mi; washout risk removed ${pct(plan.flood / s.F)}. Planning-level costs; see README.`;
+  const blob = new Blob([[meta, cols.join(","), ...rows].join("\n")], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `pinchpoint_${s.meta.name.replace(/\W+/g, "_").toLowerCase()}_${BUDGETS[state.bi]}M.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 /* ---------- state ---------- */
@@ -595,6 +649,7 @@ async function boot() {
     getJSON("./data/huc8.geojson"), getJSON("./data/streams/manifest.json", true), getJSON("./data/validation.json", true),
   ]);
   Object.assign(DATA, { culverts, sheds: shedsMeta, summary, hucGeo, streamManifest, validation });
+  decorateHucs();
 
   const hash = new URLSearchParams(location.hash.slice(1));
   if (hash.get("huc") && shedsMeta.some((x) => x.huc8 === hash.get("huc"))) state.huc = hash.get("huc");
@@ -607,6 +662,7 @@ async function boot() {
   $("#lam").addEventListener("input", (e) => setState({ lam: Number(e.target.value) / 10 }));
   $("#show-base").addEventListener("change", (e) => setState({ showBase: e.target.checked }));
   $("#stress").addEventListener("click", runStress);
+  $("#export").addEventListener("click", exportPlan);
   const openMethods = () => { $("#methods-body").innerHTML = methodsHTML(); $("#methods").showModal(); };
   $("#open-methods").addEventListener("click", openMethods);
   $("#open-methods-2").addEventListener("click", openMethods);

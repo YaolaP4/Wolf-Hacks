@@ -24,7 +24,9 @@ Pick a watershed, set a budget, and say how much you care about rivers vs. roads
 - **Map:** culverts it would replace, the ones ranking would replace, and the river miles each plan reconnects. The river lines are networks we rebuilt from USGS NHDPlus HR flowlines.
 - **Budget curve:** river miles reconnected as the budget grows, for both approaches. The shaded gap is what ranking leaves behind.
 - **Field sheet per culvert:** assessment, constriction, drainage area, river above and below, planning cost, washout score, and why it was or wasn't chosen.
+- **Statewide shading:** every watershed is shaded by how much network planning adds at the current budget. Hover to see the numbers, click to open it. This answers "where to act" at two scales: which watershed, then which culverts.
 - **Stress test:** re-solves under 60 random cost scenarios and reports how often the plan still wins and which picks are robust.
+- **Download plan (CSV):** the selected culverts with coordinates, roads, costs and inventory links, ready for a field crew.
 - **Guided tour** for the 3-minute version.
 
 ## What we found (the honest version)
@@ -106,6 +108,7 @@ Raw data is fetched from public endpoints (see `notes/plan.md`). The NABI CSVs c
 - Basemap © OpenStreetMap contributors via OpenFreeMap. Terrain: AWS Terrain Tiles.
 - Gillespie, N. et al. 2014. Flood effects on road–stream crossing infrastructure: economic and ecological benefits of stream simulation designs. *Fisheries* 39(2):62–76.
 - Cote, D. et al. 2009. A new measure of longitudinal connectivity for stream networks. *Landscape Ecology* 24:101–113.
+- Prior work on optimizing barrier removal: O'Hanley, J. R. & Tomberlin, D. 2005. Optimizing the removal of small fish passage barriers. *Environmental Modeling & Assessment* 10(2):85–98. King, S. et al. 2017. A toolkit for optimizing fish passage barrier mitigation actions. *Journal of Applied Ecology*. Pinchpoint brings this kind of optimization to NC's public inventory, jointly with flood risk, in the browser.
 - Helene damage counts: NCDOT via Blue Ridge Public Radio (June 2025); recovery cost via NC Newsline. Culvert grant program: FHWA.
 
 ## AI usage
