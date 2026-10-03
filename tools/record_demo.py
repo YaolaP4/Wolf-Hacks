@@ -19,7 +19,7 @@ threading.Thread(target=server.serve_forever, daemon=True).start()
 VID = ROOT / "docs" / "video_tmp"
 
 with sync_playwright() as p:
-    b = p.chromium.launch(channel="msedge", args=["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
+    b = p.chromium.launch(channel="msedge", args=["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"])
     ctx = b.new_context(viewport={"width": 1440, "height": 900}, record_video_dir=str(VID), record_video_size={"width": 1440, "height": 900})
     page = ctx.new_page()
     page.goto(f"http://127.0.0.1:{PORT}/")
@@ -37,6 +37,15 @@ with sync_playwright() as p:
         page.evaluate(f"document.querySelector('#budget').value = {bi}; document.querySelector('#budget').dispatchEvent(new Event('input'))")
         page.wait_for_timeout(900)
     page.wait_for_timeout(1500)
+    # the flyover on Cherry Creek (Pigeon watershed, $1M), narration off for the recording
+    page.evaluate("document.getElementById('cine-voice').checked = false")
+    page.evaluate("document.querySelector('#shed').value = '06010106'; document.querySelector('#shed').dispatchEvent(new Event('change'))")
+    page.evaluate("document.querySelector('#budget').value = 3; document.querySelector('#budget').dispatchEvent(new Event('input'))")
+    page.wait_for_timeout(4000)
+    page.evaluate("window.pinchpoint.flyover('sm2643')")
+    page.wait_for_timeout(82000)
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(2500)
     page.click("#open-methods-2")
     page.wait_for_timeout(5000)
     video = page.video.path()
