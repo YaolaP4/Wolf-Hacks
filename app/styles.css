@@ -198,7 +198,8 @@ body.hide-base .lg-base { display: none; }
 .sheet dl { margin: 0; padding: 8px 14px 4px; display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; }
 .sheet dt { color: var(--muted); }
 .sheet dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
-.sheet-foot { padding: 6px 14px 12px; display: flex; justify-content: space-between; align-items: center; }
+.sheet-foot { padding: 6px 14px 12px; display: grid; gap: 4px; }
+.sheet-formula { color: var(--muted); font-size: 11.5px; }
 .sheet-foot a { color: var(--water-deep); font-weight: 600; }
 .flood-bar { display: inline-flex; gap: 2px; vertical-align: middle; }
 .flood-bar i { width: 8px; height: 8px; border-radius: 1px; background: var(--rule); display: inline-block; }

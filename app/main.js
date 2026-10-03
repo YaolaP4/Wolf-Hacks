@@ -93,7 +93,11 @@ function renderPanel(r) {
   let v;
   if (plan.n === 0) v = "This budget is smaller than the cheapest culvert here. Raise it to see a plan.";
   else if (dMiles > 0.05 && state.lam === 0) v = `Same budget, <b>${dMiles.toFixed(1)} more river miles</b> reconnected (${base.miles > 0 ? "+" + Math.round((dMiles / base.miles) * 100) + "%" : "from none"}).`;
-  else if (state.lam > 0 && (dMiles > 0.05 || dFlood > 0.005)) v = `Same budget: <b>${dMiles >= 0 ? dMiles.toFixed(1) + " more" : Math.abs(dMiles).toFixed(1) + " fewer"} river miles</b> and <b>${dFlood >= 0 ? Math.round(dFlood * 100) + " points more" : Math.round(-dFlood * 100) + " points less"} washout risk removed</b> than ranking one at a time.`;
+  else if (state.lam > 0 && (dMiles > 0.05 || dFlood > 0.005)) {
+    const pts = Math.round(Math.abs(dFlood) * 100);
+    const fl = pts === 0 ? "about the same washout risk removed" : `${pts} ${pts === 1 ? "point" : "points"} ${dFlood >= 0 ? "more" : "less"} of the washout risk removed`;
+    v = `Same budget: <b>${Math.abs(dMiles).toFixed(1)} ${dMiles >= 0 ? "more" : "fewer"} river miles</b> and <b>${fl}</b> than ranking one at a time.`;
+  }
   else v = "At this budget both approaches reach the same river miles. The gap opens where culverts sit in chains.";
   $("#verdict").innerHTML = v;
 
@@ -240,7 +244,8 @@ function demConfig() {
 
 function bboxOf(huc) {
   const m = DATA.sheds.find((x) => x.huc8 === huc);
-  return [[m.bbox[0], m.bbox[1]], [m.bbox[2], m.bbox[3]]];
+  const b = m.view || m.bbox;
+  return [[b[0], b[1]], [b[2], b[3]]];
 }
 
 function addDataLayers() {
@@ -255,10 +260,10 @@ function addDataLayers() {
   map.addLayer({ id: "huc-line", type: "line", source: "huc", paint: { "line-color": "#3c4a4e", "line-width": 0.8, "line-opacity": 0.6 } }, before);
   map.addLayer({ id: "huc-sel", type: "line", source: "huc", filter: ["==", ["get", "huc8"], state.huc], paint: { "line-color": "#1e292d", "line-width": 2.4 } }, before);
   const w = (base) => ["interpolate", ["linear"], ["zoom"], 8, ["*", base, ["interpolate", ["linear"], ["get", "o"], 1, 0.35, 6, 1.4]], 13, ["*", base * 2.2, ["interpolate", ["linear"], ["get", "o"], 1, 0.6, 6, 2.2]]];
-  map.addLayer({ id: "streams-base", type: "line", source: "streams", layout: { "line-cap": "round" }, paint: { "line-color": "#7fb2d6", "line-width": w(1), "line-opacity": 0.8 } }, before);
+  map.addLayer({ id: "streams-base", type: "line", source: "streams", layout: { "line-cap": "round" }, paint: { "line-color": "#86b7d8", "line-width": w(0.8), "line-opacity": 0.5 } }, before);
   map.addLayer({ id: "streams-baseonly", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": "#9a6b43", "line-width": w(2.2), "line-dasharray": [1.2, 1] } }, before);
-  map.addLayer({ id: "streams-glow", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": "#5fb3e4", "line-width": w(6), "line-blur": 4, "line-opacity": 0.55 } }, before);
-  map.addLayer({ id: "streams-open", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": "#1c7fc1", "line-width": w(2.4) } }, before);
+  map.addLayer({ id: "streams-glow", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": "#5fb3e4", "line-width": w(7), "line-blur": 5, "line-opacity": 0.6 } }, before);
+  map.addLayer({ id: "streams-open", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": "#156ead", "line-width": w(3) } }, before);
   map.addLayer({ id: "streams-flow", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], paint: { "line-color": "#e9f6ff", "line-width": w(0.9), "line-dasharray": [0, 4, 3] } }, before);
   map.addLayer({ id: "links", type: "line", source: "links", paint: { "line-color": ["case", ["get", "open"], "#1c7fc1", "#8e948d"], "line-width": ["case", ["get", "open"], 2.4, 1], "line-dasharray": [2, 1.5] } }, before);
   map.addLayer({
@@ -350,6 +355,7 @@ function sheetHTML(r, id) {
   if (planSet.has(id)) {
     lines.push(`<span class="tag tag-plan">In the network-aware plan</span>`);
     if (plan.open.has(id)) lines.push(`Reopens ${d.habitat.toFixed(1)} mi above it${unlocked.length ? `, and is the way through to ${unlocked.length} more replaced culvert${unlocked.length > 1 ? "s" : ""} (${unlockedMiles.toFixed(1)} mi)` : ""}.${capNote}`);
+    if (plan.open.has(id) && d.parent && s.byId.has(d.parent)) lines.push(`That counts only because the culvert just below it, on ${esc(streamName(s.byId.get(d.parent).rec))}, is replaced too. Alone it would open ${rec.gain.toFixed(1)} mi.`);
     else lines.push("Chosen for flood risk. The river above stays cut off by a culvert below.");
   } else lines.push(`<span class="tag tag-none">Not in the network-aware plan</span>${capNote ? `<br>${capNote.trim()}` : ""}`);
   lines.push(`<span class="${baseSet.has(id) ? "tag tag-base" : ""}">Ranks #${rank} of ${s.items.length} on its own${baseSet.has(id) ? ", inside the one-at-a-time budget" : ""}.</span>`);
@@ -371,7 +377,7 @@ function sheetHTML(r, id) {
       <dt>Washout risk</dt><dd>${bars(rec.flood)} ${rec.flood.toFixed(2)}</dd>
       <dt>Planning cost</dt><dd>${money(rec.cost)} <span style="color:var(--muted);font-weight:400">(${money(rec.cost * 0.44)}–${money(rec.cost * 2.28)})</span></dd>
     </dl>
-    <div class="sheet-foot"><span style="color:var(--muted)">Risk = squeeze ${fc} × flow ${fl} × road ${fq}</span>${rec.url ? `<a href="${esc(rec.url)}" target="_blank" rel="noopener">Inventory record</a>` : ""}</div>
+    <div class="sheet-foot"><span class="sheet-formula">Washout risk = squeeze ${fc.toFixed(2)} × flow ${fl.toFixed(2)} × road ${fq.toFixed(2)}</span>${rec.url ? `<a href="${esc(rec.url)}" target="_blank" rel="noopener">Open the inventory record</a>` : ""}</div>
   </div>`;
 }
 
@@ -384,7 +390,7 @@ function selectCulvert(id, fly) {
   popup = new maplibregl.Popup({ maxWidth: "320px", offset: 12, focusAfterOpen: false })
     .setLngLat([d.rec.lon, d.rec.lat]).setHTML(sheetHTML(r, id)).addTo(map);
   popup.on("close", () => { if (state.selected === id) { state.selected = null; renderMap(compute()); } });
-  if (fly) map.flyTo({ center: [d.rec.lon, d.rec.lat], zoom: Math.max(map.getZoom(), 12.2), duration: reduceMotion ? 0 : 1200 });
+  if (fly) map.flyTo({ center: [d.rec.lon, d.rec.lat], zoom: Math.max(map.getZoom(), 12.2), offset: [0, -170], duration: reduceMotion ? 0 : 1200 });
   renderMap(r);
 }
 
@@ -500,7 +506,7 @@ const TOUR = [
     run: () => { if (popup) popup.remove(); setState({ huc: SHOWCASE, bi: 13, lam: 0.7, showBase: true }, { fit: true }); },
   },
   {
-    target: "#open-methods",
+    target: "#open-methods-2",
     text: () => "Every number is checked: the stream networks against the inventory, the optimizer against brute force, the result against cost uncertainty. Methods has the details, including where ranking one at a time does just as well.",
   },
 ];
@@ -618,7 +624,7 @@ async function boot() {
     container: "map", style: buildStyle(demConfig()), bounds: bboxOf(state.huc),
     fitBoundsOptions: { padding: 40 }, dragRotate: false, pitchWithRotate: false, attributionControl: { compact: true },
   });
-  window.pinchpoint = { map, state, compute };
+  window.pinchpoint = { map, state, compute, select: (id) => selectCulvert(id, true) };
   map.on("error", (e) => console.warn("map error:", e.error?.message || e));
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-left");
   map.addControl(new maplibregl.ScaleControl({ unit: "imperial" }), "bottom-right");

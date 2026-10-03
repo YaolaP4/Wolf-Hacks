@@ -51,6 +51,8 @@ def main() -> None:
         sheds.append({
             "huc8": f"{int(huc):08d}", "name": g.subbasin.iloc[0], "n": len(g),
             "bbox": [round(g.lon.min(), 4), round(g.lat.min(), 4), round(g.lon.max(), 4), round(g.lat.max(), 4)],
+            "view": [round(float(g.lon.quantile(0.05)), 4), round(float(g.lat.quantile(0.05)), 4),
+                     round(float(g.lon.quantile(0.95)), 4), round(float(g.lat.quantile(0.95)), 4)] if len(g) >= 20 else None,
             "chains": int(g.parent.notna().sum()),
             "miles": round(float(g.totalupstreammiles.sum()), 1),
         })
