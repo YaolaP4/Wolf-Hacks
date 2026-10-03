@@ -24,6 +24,7 @@ Pick a watershed, set a budget, and say how much you care about rivers vs. roads
 - **Map:** culverts it would replace, the ones ranking would replace, and the river miles each plan reconnects. The river lines are networks we rebuilt from USGS NHDPlus HR flowlines.
 - **Budget curve:** river miles reconnected as the budget grows, for both approaches. The shaded gap is what ranking leaves behind.
 - **Field sheet per culvert:** assessment, constriction, drainage area, river above and below, planning cost, washout score, and why it was or wasn't chosen.
+- **Flyover for any culvert:** a narrated, seven-scene 3D tour over USGS satellite imagery and terrain. It shows where the culvert is and how close Helene's landslides came; the crossing and its field rating; an animated flood cross-section (undersized pipe vs. stream-width crossing in the same storm); the river it cuts off, traced upstream; what lies below; the fix and its cost; and where it sits in the budget plan. Every sentence is built from the culvert's inventory record and the live plan.
 - **Statewide shading:** every watershed is shaded by how much network planning adds at the current budget. Hover to see the numbers, click to open it. This answers "where to act" at two scales: which watershed, then which culverts.
 - **Stress test:** re-solves under 60 random cost scenarios and reports how often the plan still wins and which picks are robust.
 - **Download plan (CSV):** the selected culverts with coordinates, roads, costs and inventory links, ready for a field crew.
@@ -117,7 +118,7 @@ WolfHacks requires teams to cite AI use. We used AI heavily, and this section sa
 
 **Tools**
 - **Claude (Anthropic), through Claude Code:** idea generation; the data pipeline, optimizer, tests and web app code; and drafting this README and the DevPost text.
-- **GPT (OpenAI), through the Hermes agent CLI:** an independent second idea pool, and two of the advisor and peer-reviewer seats in an idea "council." We used two model families so one model's blind spots and self-preference would not decide the project. The full council transcript, prompts and outputs are in `ideation/council/`.
+- **GPT (OpenAI), through the Hermes agent CLI:** an independent second idea pool; two of the advisor and peer-reviewer seats in an idea "council"; and the animated flood cross-section module (`app/xsection.js`), written from our spec in `notes/xsection_spec.md` and then adjusted by us. We used two model families so one model's blind spots and self-preference would not decide the project. The full council transcript, prompts and outputs are in `ideation/council/`.
 
 **How we chose the idea.** Each model wrote its own idea pool without seeing the other's (`ideation/claude_divergent.md`, `ideation/hermes_divergent_raw.md`). We verified every dataset against a live endpoint. Then a five-advisor council judged the source-blinded pool, and peer reviewers from both models critiqued it (`ideation/council/`). We picked the culvert idea from the three finalists in `ideation/PROPOSALS.md`.
 

@@ -33,6 +33,7 @@ Pinchpoint is a planning map for that decision.
 4. The map lights up the **river miles each plan reconnects**, drawn on stream networks we rebuilt from USGS high-resolution hydrography.
 5. Click any culvert for a **field sheet**: assessment, how badly it squeezes the stream, drainage area, river above and below, planning cost range, washout score, and a plain-language reason it was or wasn't chosen.
 6. **Stress-test costs** re-solves under 60 random cost scenarios and reports how often the plan still wins.
+7. **Fly to any culvert** for a narrated 3D flyover over satellite imagery and terrain. It covers why the crossing fails (an animated flood cross-section), the river it cuts off (traced upstream), what's below, the fix and its cost, and where it sits in the budget plan.
 
 ## What we found
 

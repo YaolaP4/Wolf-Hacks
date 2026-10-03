@@ -150,8 +150,8 @@ export async function startFlyover(ctx) {
       facts: [["Field rating", rec.severity || "—"], ["Constriction", rec.constriction || "Not recorded"], ["Road surface", rec.roadType || "—"], ["Condition", rec.condition || "—"], ["Inventory ID", rec.id]],
       pulse: true,
       run: async () => {
-        await move(map, "flyTo", { center: at, zoom: 16.6, pitch: 72, bearing: 10, duration: 4200 });
-        if (!reduceMotion) await move(map, "easeTo", { bearing: 85, duration: 7000, easing: (t) => t });
+        await move(map, "flyTo", { center: at, zoom: 14.1, pitch: 52, bearing: 10, duration: 4200 });
+        if (!reduceMotion) await move(map, "easeTo", { bearing: 70, duration: 7000, easing: (t) => t });
       },
     },
     {
@@ -159,7 +159,7 @@ export async function startFlyover(ctx) {
       say: `The stream here ${daMi != null ? `drains ${daMi.toFixed(1)} square miles and ` : ""}runs about ${bankfull} feet wide at bankfull. Squeezed through a narrower opening, storm water piles up behind the road, scours the outlet, and can wash the road out, the kind of failure Helene repeated across western North Carolina. At normal flows, fast water through the pipe keeps fish from moving upstream. Pinchpoint scores its washout risk ${rec.flood.toFixed(2)} out of 1.`,
       facts: [["Stream width (est.)", `${bankfull} ft`], ["Opening (est.)", rec.constriction && RATIO[rec.constriction] ? `≈ ${Math.round(ratio * bankfull)} ft` : "not recorded"], ["Washout score", rec.flood.toFixed(2)], ["Squeeze × flow × road", rec.floodParts.map((x) => x.toFixed(2)).join(" × ")]],
       xs: { variant: "existing", ratio, levels: [0.05, 0.6, 1.0], note: RATIO[rec.constriction] ? "Opening drawn from the field constriction class (NAACC: severe < 50% of stream width)." : "Constriction not recorded; opening drawn at a typical size." },
-      run: async () => { await move(map, "easeTo", { pitch: 60, zoom: 16, bearing: 120, duration: 2500 }); },
+      run: async () => { await move(map, "easeTo", { pitch: 50, zoom: 14, bearing: 110, duration: 2500 }); },
     },
     {
       title: "What it cuts off",
@@ -182,7 +182,7 @@ export async function startFlyover(ctx) {
         for (const f of fs) {
           if (sig.stopped) return;
           const pt = along(path.coords, f);
-          await move(map, "easeTo", { center: pt, zoom: 14.6, pitch: 68, bearing: bearing(prev, pt), duration: total / fs.length, easing: (t) => t });
+          await move(map, "easeTo", { center: pt, zoom: 14.5, pitch: 60, bearing: bearing(prev, pt), duration: total / fs.length, easing: (t) => t });
           prev = pt;
         }
       },
@@ -190,7 +190,7 @@ export async function startFlyover(ctx) {
     {
       title: "What's below",
       say: P.parent
-        ? `Just downstream, another barrier culvert on ${prettyStream(P.parent)} blocks the same river. Fixed alone, this one opens only ${rec.gain.toFixed(1)} miles to fish. Fixed together with the ${plural(P.chainCount, "culvert", "culverts")} below it, they reconnect ${P.chainMiles.toFixed(1)} miles for ${money(P.chainCost)}.`
+        ? `Just downstream, another barrier culvert on ${prettyStream(P.parent)} blocks the same river. ${rec.gain < 0.05 ? "Fixed alone, this one reconnects no river at all, because the culvert below still blocks fish." : `Fixed alone, this one opens only ${rec.gain.toFixed(1)} miles to fish.`} Fixed together with ${P.chainCount === 1 ? "the culvert" : `the ${P.chainCount} culverts`} below it, they reconnect ${P.chainMiles.toFixed(1)} miles for ${money(P.chainCost)}.`
         : rec.anchorXY
           ? `Below it, ${rec.down.toFixed(1)} miles of open river run down to ${rec.anchorName ? rec.anchorName : "a dam"}. Fish in that stretch are the ones that would move upstream, so the miles it can reconnect are capped at ${Math.min(rec.up, rec.anchorMiles).toFixed(1)}.`
           : `Below it, ${rec.down.toFixed(1)} miles of open river lead to the next barrier downstream. That's the population that would move upstream once it's fixed.`,
@@ -202,7 +202,7 @@ export async function startFlyover(ctx) {
         if (tgt) {
           const mid = [(at[0] + tgt[0]) / 2, (at[1] + tgt[1]) / 2];
           const far = km(at, tgt);
-          await move(map, "flyTo", { center: mid, zoom: Math.max(12.2, Math.min(15.5, 15.6 - Math.log2(Math.max(0.2, far)))), pitch: 62, bearing: bearing(tgt, at), duration: 4500 });
+          await move(map, "flyTo", { center: mid, zoom: Math.max(12.2, Math.min(14.6, 15 - Math.log2(Math.max(0.2, far)))), pitch: 52, bearing: bearing(tgt, at), duration: 4500 });
           ctx.mark(tgt);
         } else {
           await move(map, "flyTo", { center: at, zoom: 13.4, pitch: 58, bearing: 200, duration: 4500 });
@@ -214,7 +214,7 @@ export async function startFlyover(ctx) {
       say: `A stream-width crossing here would span about ${Math.round(rec.spanFt)} feet and keep a natural streambed through it. Planning cost: about ${money(rec.cost)}, with a range of ${money(rec.cost * 0.44)} to ${money(rec.cost * 2.28)}. Crossings built this way came through Tropical Storm Irene intact where undersized pipes failed.`,
       facts: [["Span", `≈ ${Math.round(rec.spanFt)} ft`], ["Planning cost", money(rec.cost)], ["Cost range", `${money(rec.cost * 0.44)}–${money(rec.cost * 2.28)}`], ["Evidence", "Gillespie et al. 2014"]],
       xs: { variant: "fixed", ratio: 1.3, levels: [0.05, 0.6, 1.0], note: "Same storm stages as before, through a stream-width crossing." },
-      run: async () => { ctx.mark(null); await move(map, "flyTo", { center: at, zoom: 16.2, pitch: 70, bearing: 300, duration: 4200 }); },
+      run: async () => { ctx.mark(null); await move(map, "flyTo", { center: at, zoom: 14.4, pitch: 52, bearing: 300, duration: 4200 }); },
     },
     {
       title: "In the plan",
@@ -236,9 +236,11 @@ export async function startFlyover(ctx) {
   hidden.forEach((id) => map.setLayoutProperty(id, "visibility", "none"));
   if (!map.getSource("sat")) map.addSource("sat", { type: "raster", tiles: [SAT], tileSize: 256, maxzoom: 16, attribution: "Imagery: USGS The National Map" });
   if (!map.getLayer("sat")) map.addLayer({ id: "sat", type: "raster", source: "sat", paint: { "raster-saturation": -0.15, "raster-contrast": 0.05, "raster-fade-duration": 200 } }, "huc-line");
-  if (!map.getSource("terrain-dem")) map.addSource("terrain-dem", { type: "raster-dem", tiles: [DEM], encoding: "terrarium", tileSize: 256, maxzoom: 14 });
-  map.setTerrain({ source: "terrain-dem", exaggeration: 1.35 });
-  if (map.setSky) map.setSky({ "sky-color": "#8ec5f2", "horizon-color": "#e6f1fb", "sky-horizon-blend": 0.6, "horizon-fog-blend": 0.6, "fog-color": "#dfe9f2", "fog-ground-blend": 0.3 });
+  if (!map.getSource("terrain-dem")) map.addSource("terrain-dem", { type: "raster-dem", tiles: [DEM], encoding: "terrarium", tileSize: 256, maxzoom: 13 });
+  map.setTerrain({ source: "terrain-dem", exaggeration: 1.15 });
+  // A sky-colored background shows above the horizon; MapLibre's fog washed the whole view out.
+  const bg0 = map.getPaintProperty("bg", "background-color");
+  map.setPaintProperty("bg", "background-color", "#cfe2f0");
   if (path && !map.getSource("trace")) {
     map.addSource("trace", { type: "geojson", lineMetrics: true, data: { type: "Feature", geometry: { type: "LineString", coordinates: path.coords }, properties: {} } });
     map.addLayer({ id: "trace-glow", type: "line", source: "trace", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-width": 14, "line-blur": 8, "line-opacity": 0.55, "line-gradient": grad(colors.traceGlow, 0) } });
@@ -271,6 +273,7 @@ export async function startFlyover(ctx) {
     if (map.getSource("trace")) map.removeSource("trace");
     if (map.getLayer("sat")) map.removeLayer("sat");
     map.setTerrain(null);
+    map.setPaintProperty("bg", "background-color", bg0);
     hidden.forEach((id) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", "visible"));
     ctx.pulse(null, false); ctx.mark(null);
     setTimeout(() => { map.resize(); map.jumpTo(view0); }, 60);

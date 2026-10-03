@@ -113,7 +113,7 @@ export function crossSection(container, opts = {}) {
       d: "M194 244L210 231H430L446 244L430 251H210Z",
       fill: colors.road
     }, scene);
-    el(openingTag, { ...openingAttrs, fill: colors.waterDeep }, scene);
+    el(openingTag, { ...openingAttrs, fill: variant === "existing" ? "#1d2427" : "#2a3236" }, scene);
     const bed = el("g", { "clip-path": `url(#${uid}-opening)` }, scene);
     el("path", {
       d: `M${geometry.left} 238Q320 232 ${geometry.right} 238V249H${geometry.left}Z`,
