@@ -6,49 +6,6 @@ const MAX_UNITS = Math.round(20e6 / UNIT);
 const SHOWCASE = "06010105";
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// Color themes. One set of tokens drives both the map layers and the panel CSS.
-// Blue (or teal) is the network-aware plan and the rivers it reconnects, the second accent is
-// one-at-a-time ranking, and slate stands for roads.
-const LIGHT_BASE = {
-  bg: "#f4f5f7", wood: "#e8ede8", woodOp: 0.7, urban: "#eceef1", shadow: "#6b7480", highlight: "#ffffff", accent: "#8c949e", exag: 0.3,
-  contour: "#94a3b8", contourOp: [0.2, 0.08], water: "#d4e4f1", waterway: "#b4cde3", roadMinor: "#dfe3e8", roadMajor: "#c9d0d9",
-  state: "#94a3b8", waterLabel: "#4f7fae", label: "#475569", halo: "#f4f5f7", hucLine: "#94a3b8", hucSel: "#0f172a",
-  none: "#a3adbb", ring: "#ffffff", sel: "#0f172a", streamBaseOp: 0.6,
-};
-const LIGHT_CSS = {
-  "--paper": "#f4f5f7", "--sheet": "#ffffff", "--field": "#ffffff", "--ink": "#0f172a", "--ink-2": "#334155", "--muted": "#64748b",
-  "--rule": "#e2e8f0", "--rule-2": "#eef2f6", "--road": "#475569", "--tour-bg": "#0f172a", "--shadow": "rgba(15, 23, 42, 0.12)",
-};
-const THEMES = {
-  slate: {
-    css: { ...LIGHT_CSS, "--water": "#2563eb", "--water-deep": "#1d4ed8", "--water-glow": "#93c5fd", "--water-wash": "#eef4ff", "--compare": "#e8650f", "--compare-wash": "#fff4ec" },
-    map: { ...LIGHT_BASE, hucRamp: ["#94a3b8", "#c7d7fb", "#7aa2f7", "#2563eb"], streamBase: "#a7c4e0", open: "#2563eb", glow: "#93c5fd", flow: "#eff6ff", plan: "#2563eb", compare: "#e8650f" },
-  },
-  teal: {
-    css: { ...LIGHT_CSS, "--water": "#0d9488", "--water-deep": "#0f766e", "--water-glow": "#5eead4", "--water-wash": "#ecfdf8", "--compare": "#e11d48", "--compare-wash": "#fff1f3" },
-    map: { ...LIGHT_BASE, hucRamp: ["#94a3b8", "#c3ebe5", "#5fcfc0", "#0d9488"], streamBase: "#a3cdd0", open: "#0d9488", glow: "#5eead4", flow: "#f0fdfa", plan: "#0d9488", compare: "#e11d48" },
-  },
-  night: {
-    dark: true,
-    css: {
-      "--paper": "#0d1424", "--sheet": "#121a2b", "--field": "#1a2336", "--ink": "#e5e9f0", "--ink-2": "#c3cad6", "--muted": "#8b95a7",
-      "--rule": "#243049", "--rule-2": "#1c2539", "--road": "#94a3b8", "--tour-bg": "#020617", "--shadow": "rgba(0, 0, 0, 0.45)",
-      "--water": "#38bdf8", "--water-deep": "#7dd3fc", "--water-glow": "#0ea5e9", "--water-wash": "#16243a", "--compare": "#f5a524", "--compare-wash": "#2a2112",
-    },
-    map: {
-      bg: "#0d1424", wood: "#111b2c", woodOp: 0.6, urban: "#141d2e", shadow: "#000000", highlight: "#2b3a52", accent: "#1b2638", exag: 0.45,
-      contour: "#3b4a63", contourOp: [0.35, 0.14], water: "#16263d", waterway: "#1f3754", roadMinor: "#1c2638", roadMajor: "#2a3850",
-      state: "#3b4a63", waterLabel: "#5b8bb8", label: "#8b95a7", halo: "#0d1424", hucLine: "#3b4a63", hucSel: "#e5e9f0",
-      hucRamp: ["#334155", "#164e63", "#0e7490", "#22d3ee"], streamBase: "#2b5275", streamBaseOp: 0.75, open: "#38bdf8", glow: "#0ea5e9",
-      flow: "#e0f2fe", plan: "#38bdf8", compare: "#f5a524", none: "#56627a", ring: "#0d1424", sel: "#e5e9f0",
-    },
-  },
-};
-const THEME = THEMES[new URLSearchParams(location.hash.slice(1)).get("theme")] ? new URLSearchParams(location.hash.slice(1)).get("theme") : "slate";
-const T = THEMES[THEME].map;
-for (const [k, v] of Object.entries(THEMES[THEME].css)) document.documentElement.style.setProperty(k, v);
-document.documentElement.dataset.theme = THEME;
-
 const state = { huc: SHOWCASE, bi: 7, lam: 0, showBase: true, selected: null, stress: null };
 const DATA = {};
 const sheds = new Map();
@@ -185,7 +142,7 @@ function renderCurve(r) {
     <path class="l-plan" d="${line("p")}"/>
     <line class="marker" x1="${x(cur)}" x2="${x(cur)}" y1="${T}" y2="${Hh - B}"/>
     <circle cx="${x(cur)}" cy="${y(curP)}" r="3.5" fill="var(--water)"/>
-    <circle cx="${x(cur)}" cy="${y(curQ)}" r="3" fill="var(--sheet)" stroke="var(--compare)" stroke-width="1.5"/>
+    <circle cx="${x(cur)}" cy="${y(curQ)}" r="3" fill="#fff" stroke="var(--contour)" stroke-width="1.5"/>
     <text class="tick" x="${L}" y="${Hh - 6}">$0</text>
     <text class="tick" x="${x(xmaxM / 2)}" y="${Hh - 6}" text-anchor="middle">$${xmaxM / 2}M</text>
     <text class="tick" x="${x(xmaxM)}" y="${Hh - 6}" text-anchor="middle">$${xmaxM}M</text>
@@ -219,33 +176,14 @@ function renderPlanList(r) {
     <button type="button" class="item" data-id="${esc(d.id)}">
       <span class="stream">${esc(streamName(d.rec))}</span>
       <span class="road">${esc(d.rec.road || "Unnamed road")}${d.rec.roadType && d.rec.roadType !== "Unknown" ? `, ${esc(d.rec.roadType.toLowerCase())}` : ""}</span>
-      <span class="cid">${esc(d.id)}</span>
       <span class="num">${label}<small>${money(d.rec.cost)}</small></span>
     </button>`;
-  // A template row in the same format, so each value's meaning is clear before reading the list.
-  const hasChain = rows.some((x) => x.g.length > 1);
-  const key = `
-    <li class="key" aria-label="How to read the plan">
-      ${hasChain ? `<div class="bundle-head">(Culverts in one chain): (river miles reconnected) for (total cost)</div>` : ""}
-      <div class="item item-key">
-        <span class="stream">(Stream the culvert carries)</span>
-        <span class="road">(Road above it), (road surface)</span>
-        <span class="cid">(Inventory ID)</span>
-        <span class="num">(River miles reconnected)<small>(Planning cost)</small></span>
-      </div>
-    </li>`;
-  ol.innerHTML = key + rows.map(({ g, miles, cost }) =>
+  ol.innerHTML = rows.map(({ g, miles, cost }) =>
     g.length > 1
       ? `<li class="bundle"><div class="bundle-head">${g.length} culverts in one chain: ${miles.toFixed(1)} mi for ${money(cost)}</div>${g.map((d) => item(d, plan.open.has(d.id) ? `${d.habitat.toFixed(1)} mi above` : "flood fix")).join("")}</li>`
       : `<li class="single">${item(g[0], miles > 0 ? `+${miles.toFixed(1)} mi` : "flood fix")}</li>`
   ).join("");
-  ol.querySelectorAll(".item[data-id]").forEach((b) => {
-    b.addEventListener("click", () => selectCulvert(b.dataset.id, true));
-    b.addEventListener("mouseenter", () => setHover(b.dataset.id));
-    b.addEventListener("mouseleave", () => setHover(null));
-    b.addEventListener("focus", () => setHover(b.dataset.id));
-    b.addEventListener("blur", () => setHover(null));
-  });
+  ol.querySelectorAll(".item").forEach((b) => b.addEventListener("click", () => selectCulvert(b.dataset.id, true)));
 }
 
 function depth(s, id) {
@@ -265,20 +203,20 @@ function buildStyle(dem) {
       ...(dem.contours ? { contours: dem.contours } : {}),
     },
     layers: [
-      { id: "bg", type: "background", paint: { "background-color": T.bg } },
-      { id: "wood", type: "fill", source: "omt", "source-layer": "landcover", filter: ["in", ["get", "class"], ["literal", ["wood", "forest"]]], paint: { "fill-color": T.wood, "fill-opacity": T.woodOp } },
-      { id: "urban", type: "fill", source: "omt", "source-layer": "landuse", filter: ["in", ["get", "class"], ["literal", ["residential", "commercial", "industrial"]]], paint: { "fill-color": T.urban, "fill-opacity": 0.7 } },
-      { id: "shade", type: "hillshade", source: "dem", paint: { "hillshade-shadow-color": T.shadow, "hillshade-highlight-color": T.highlight, "hillshade-accent-color": T.accent, "hillshade-exaggeration": T.exag, "hillshade-illumination-direction": 315 } },
+      { id: "bg", type: "background", paint: { "background-color": "#f2f4ef" } },
+      { id: "wood", type: "fill", source: "omt", "source-layer": "landcover", filter: ["in", ["get", "class"], ["literal", ["wood", "forest"]]], paint: { "fill-color": "#dbe5d1", "fill-opacity": 0.55 } },
+      { id: "urban", type: "fill", source: "omt", "source-layer": "landuse", filter: ["in", ["get", "class"], ["literal", ["residential", "commercial", "industrial"]]], paint: { "fill-color": "#e9e4dc", "fill-opacity": 0.6 } },
+      { id: "shade", type: "hillshade", source: "dem", paint: { "hillshade-shadow-color": "#5e5245", "hillshade-highlight-color": "#ffffff", "hillshade-accent-color": "#7d6e5e", "hillshade-exaggeration": 0.42, "hillshade-illumination-direction": 315 } },
       ...(dem.contours ? [
-        { id: "contour", type: "line", source: "contours", "source-layer": "contours", minzoom: 11, paint: { "line-color": T.contour, "line-opacity": ["match", ["get", "level"], 1, T.contourOp[0], T.contourOp[1]], "line-width": ["match", ["get", "level"], 1, 0.8, 0.4] } },
+        { id: "contour", type: "line", source: "contours", "source-layer": "contours", paint: { "line-color": "#9a6b43", "line-opacity": ["match", ["get", "level"], 1, 0.42, 0.2], "line-width": ["match", ["get", "level"], 1, 0.9, 0.45] } },
       ] : []),
-      { id: "water", type: "fill", source: "omt", "source-layer": "water", paint: { "fill-color": T.water } },
-      { id: "waterway", type: "line", source: "omt", "source-layer": "waterway", paint: { "line-color": T.waterway, "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.3, 13, 1.1] } },
-      { id: "road-minor", type: "line", source: "omt", "source-layer": "transportation", minzoom: 10, filter: ["in", ["get", "class"], ["literal", ["minor", "service", "track"]]], paint: { "line-color": T.roadMinor, "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.4, 15, 2] } },
-      { id: "road-major", type: "line", source: "omt", "source-layer": "transportation", filter: ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary", "secondary", "tertiary"]]], paint: { "line-color": T.roadMajor, "line-width": ["interpolate", ["linear"], ["zoom"], 7, 0.6, 12, 1.8, 15, 3.5] } },
-      { id: "state-line", type: "line", source: "omt", "source-layer": "boundary", filter: ["==", ["get", "admin_level"], 4], paint: { "line-color": T.state, "line-width": 1, "line-dasharray": [3, 2] } },
-      { id: "water-name", type: "symbol", source: "omt", "source-layer": "water_name", layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Italic"], "text-size": 12 }, paint: { "text-color": T.waterLabel, "text-halo-color": T.halo, "text-halo-width": 1.4 } },
-      { id: "labels-place", type: "symbol", source: "omt", "source-layer": "place", filter: ["in", ["get", "class"], ["literal", ["city", "town", "village"]]], layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": ["match", ["get", "class"], "city", 14, "town", 12, 11] }, paint: { "text-color": T.label, "text-halo-color": T.halo, "text-halo-width": 1.6 } },
+      { id: "water", type: "fill", source: "omt", "source-layer": "water", paint: { "fill-color": "#c4ddeb" } },
+      { id: "waterway", type: "line", source: "omt", "source-layer": "waterway", paint: { "line-color": "#8dbfdc", "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.3, 13, 1.2] } },
+      { id: "road-minor", type: "line", source: "omt", "source-layer": "transportation", minzoom: 10, filter: ["in", ["get", "class"], ["literal", ["minor", "service", "track"]]], paint: { "line-color": "#a9ada4", "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.3, 15, 1.6] } },
+      { id: "road-major", type: "line", source: "omt", "source-layer": "transportation", filter: ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary", "secondary", "tertiary"]]], paint: { "line-color": "#b4553c", "line-opacity": 0.75, "line-width": ["interpolate", ["linear"], ["zoom"], 7, 0.5, 12, 1.6, 15, 3] } },
+      { id: "state-line", type: "line", source: "omt", "source-layer": "boundary", filter: ["==", ["get", "admin_level"], 4], paint: { "line-color": "#7b8582", "line-width": 1, "line-dasharray": [3, 2] } },
+      { id: "water-name", type: "symbol", source: "omt", "source-layer": "water_name", layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Italic"], "text-size": 12 }, paint: { "text-color": "#2e6f99", "text-halo-color": "#f2f4ef", "text-halo-width": 1.4 } },
+      { id: "labels-place", type: "symbol", source: "omt", "source-layer": "place", filter: ["in", ["get", "class"], ["literal", ["city", "town", "village"]]], layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": ["match", ["get", "class"], "city", 14, "town", 12, 11] }, paint: { "text-color": "#33403f", "text-halo-color": "#f2f4ef", "text-halo-width": 1.6 } },
     ],
   };
 }
@@ -313,8 +251,7 @@ function bboxOf(huc) {
 // Watershed shading: how much network-aware planning adds over ranking at the current budget.
 const gainKey = () => `g${state.bi}`;
 function hucFillColor() {
-  const [a, b, c, d] = T.hucRamp;
-  return ["interpolate", ["linear"], ["coalesce", ["get", gainKey()], 0], 0, a, 0.02, b, 0.15, c, 0.5, d];
+  return ["interpolate", ["linear"], ["coalesce", ["get", gainKey()], 0], 0, "#7b878a", 0.02, "#b9d6ea", 0.15, "#5aa3d6", 0.5, "#1c6aa8"];
 }
 function hucFillOpacity() {
   return ["case", ["==", ["get", "huc8"], state.huc], 0, ["interpolate", ["linear"], ["coalesce", ["get", gainKey()], 0], 0, 0.06, 0.02, 0.2, 0.5, 0.45]];
@@ -333,88 +270,52 @@ function addDataLayers() {
   map.addSource("huc", { type: "geojson", data: DATA.hucGeo });
   map.addSource("streams", { type: "geojson", data: empty });
   map.addSource("links", { type: "geojson", data: empty });
-  map.addSource("culverts", { type: "geojson", data: empty, promoteId: "id" });
+  map.addSource("culverts", { type: "geojson", data: empty });
   map.addSource("sel", { type: "geojson", data: empty });
   const before = "labels-place";
   map.addLayer({ id: "huc-fill", type: "fill", source: "huc", paint: { "fill-color": hucFillColor(), "fill-opacity": hucFillOpacity() } }, before);
-  map.addLayer({ id: "huc-line", type: "line", source: "huc", paint: { "line-color": T.hucLine, "line-width": 0.8, "line-opacity": 0.7 } }, before);
-  map.addLayer({ id: "huc-sel", type: "line", source: "huc", filter: ["==", ["get", "huc8"], state.huc], paint: { "line-color": T.hucSel, "line-width": 2 } }, before);
+  map.addLayer({ id: "huc-line", type: "line", source: "huc", paint: { "line-color": "#3c4a4e", "line-width": 0.8, "line-opacity": 0.6 } }, before);
+  map.addLayer({ id: "huc-sel", type: "line", source: "huc", filter: ["==", ["get", "huc8"], state.huc], paint: { "line-color": "#1e292d", "line-width": 2.4 } }, before);
   const w = (base) => ["interpolate", ["linear"], ["zoom"], 8, ["*", base, ["interpolate", ["linear"], ["get", "o"], 1, 0.35, 6, 1.4]], 13, ["*", base * 2.2, ["interpolate", ["linear"], ["get", "o"], 1, 0.6, 6, 2.2]]];
-  map.addLayer({ id: "streams-base", type: "line", source: "streams", layout: { "line-cap": "round" }, paint: { "line-color": T.streamBase, "line-width": w(0.8), "line-opacity": T.streamBaseOp } }, before);
-  map.addLayer({ id: "streams-baseonly", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": T.compare, "line-width": w(2), "line-dasharray": [1.4, 1.1] } }, before);
-  map.addLayer({ id: "streams-glow", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": T.glow, "line-width": w(7), "line-blur": 5, "line-opacity": 0.55 } }, before);
-  map.addLayer({ id: "streams-open", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": T.open, "line-width": w(2.8) } }, before);
-  map.addLayer({ id: "streams-flow", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], paint: { "line-color": T.flow, "line-width": w(0.8), "line-dasharray": [0, 4, 3] } }, before);
-  map.addLayer({ id: "links", type: "line", source: "links", paint: { "line-color": ["case", ["get", "open"], T.open, T.none], "line-width": ["case", ["get", "open"], 2.4, 1], "line-dasharray": [2, 1.5] } }, before);
-
-  // Size grows with the river above a culvert. Hovered culverts pop by half again.
-  const hovered = ["boolean", ["feature-state", "hover"], false];
-  const pop = ["case", hovered, 1.5, 1];
-  const size = (z8, z13) => ["interpolate", ["linear"], ["zoom"], 8, ["*", pop, ["+", z8[0], ["*", z8[1], ["sqrt", ["get", "up"]]]]], 13, ["*", pop, ["+", z13[0], ["*", z13[1], ["sqrt", ["get", "up"]]]]]];
-  // Soft halo behind culverts that only the network-aware plan picks, and behind any hovered culvert.
-  map.addLayer({
-    id: "culvert-halo", type: "circle", source: "culverts",
-    paint: {
-      "circle-radius": size([5, 0.8], [10, 2.1]),
-      "circle-color": ["match", ["get", "s"], "base", T.compare, "none", T.none, T.glow],
-      "circle-opacity": ["case", hovered, 0.45, ["match", ["get", "s"], "plan", 0.4, 0]],
-      "circle-blur": 0.5,
-    },
-  });
+  map.addLayer({ id: "streams-base", type: "line", source: "streams", layout: { "line-cap": "round" }, paint: { "line-color": "#86b7d8", "line-width": w(0.8), "line-opacity": 0.5 } }, before);
+  map.addLayer({ id: "streams-baseonly", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": "#9a6b43", "line-width": w(2.2), "line-dasharray": [1.2, 1] } }, before);
+  map.addLayer({ id: "streams-glow", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": "#5fb3e4", "line-width": w(7), "line-blur": 5, "line-opacity": 0.6 } }, before);
+  map.addLayer({ id: "streams-open", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": "#156ead", "line-width": w(3) } }, before);
+  map.addLayer({ id: "streams-flow", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], paint: { "line-color": "#e9f6ff", "line-width": w(0.9), "line-dasharray": [0, 4, 3] } }, before);
+  map.addLayer({ id: "links", type: "line", source: "links", paint: { "line-color": ["case", ["get", "open"], "#1c7fc1", "#8e948d"], "line-width": ["case", ["get", "open"], 2.4, 1], "line-dasharray": [2, 1.5] } }, before);
   map.addLayer({
     id: "culverts", type: "circle", source: "culverts",
     paint: {
-      "circle-radius": size([2.2, 0.5], [5, 1.4]),
-      "circle-color": ["match", ["get", "s"], "plan", T.plan, "both", T.plan, "base", T.ring, T.none],
-      "circle-stroke-color": ["match", ["get", "s"], "base", T.compare, T.ring],
-      "circle-stroke-width": ["+", ["match", ["get", "s"], "base", 2.4, "none", 0.8, 1.5], ["case", hovered, 1, 0]],
-      "circle-opacity": ["match", ["get", "s"], "none", 0.9, 1],
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, ["+", 2.2, ["*", 0.5, ["sqrt", ["get", "up"]]]], 13, ["+", 5, ["*", 1.4, ["sqrt", ["get", "up"]]]]],
+      "circle-color": ["match", ["get", "s"], "plan", "#1c7fc1", "both", "#1c7fc1", "base", "#ffffff", "#8e948d"],
+      "circle-stroke-color": ["match", ["get", "s"], "base", "#9a6b43", "both", "#9a6b43", "#ffffff"],
+      "circle-stroke-width": ["match", ["get", "s"], "base", 2.4, "both", 2.4, "plan", 1.6, 0.8],
+      "circle-opacity": ["match", ["get", "s"], "none", 0.85, 1],
     },
   });
-  map.addLayer({ id: "sel", type: "circle", source: "sel", paint: { "circle-radius": 15, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": T.sel, "circle-stroke-width": 1.75 } });
+  map.addLayer({ id: "sel", type: "circle", source: "sel", paint: { "circle-radius": 14, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#1e292d", "circle-stroke-width": 2 } });
 
   map.on("click", "culverts", (e) => selectCulvert(e.features[0].properties.id, false));
-  const tip = new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: "huc-tip", offset: 12 });
-  const statusText = { both: "Picked by both plans", base: "Picked only by one-at-a-time ranking", none: "Not picked at this budget" };
-  map.on("mousemove", (e) => {
-    const c = map.queryRenderedFeatures(e.point, { layers: ["culverts"] })[0];
-    if (c) {
-      map.getCanvas().style.cursor = "pointer";
-      const id = c.properties.id;
-      setHover(id);
-      const d = shed(state.huc).byId.get(id);
-      if (!d) return;
-      const st = c.properties.s;
-      const label = st === "plan" ? (state.showBase ? "Picked only by the network-aware plan" : "In the plan") : statusText[st];
-      tip.setLngLat(c.geometry.coordinates).setHTML(`<span class="tip-stream">${esc(streamName(d.rec))}</span><br>${label}<br><span class="tip-hint">${d.habitat.toFixed(1)} mi of river above it. Click for details.</span>`).addTo(map);
-      return;
-    }
-    setHover(null);
-    map.getCanvas().style.cursor = "";
-    const h = map.queryRenderedFeatures(e.point, { layers: ["huc-fill"] })[0];
-    const m = h && DATA.sheds.find((x) => x.huc8 === h.properties.huc8);
-    if (!m) { tip.remove(); return; }
+  map.on("mouseenter", "culverts", () => (map.getCanvas().style.cursor = "pointer"));
+  map.on("mouseleave", "culverts", () => (map.getCanvas().style.cursor = ""));
+  const tip = new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: "huc-tip", offset: 8 });
+  map.on("mousemove", "huc-fill", (e) => {
+    if (map.queryRenderedFeatures(e.point, { layers: ["culverts"] }).length) { tip.remove(); return; }
+    const h = e.features[0].properties.huc8;
+    const m = DATA.sheds.find((x) => x.huc8 === h);
+    if (!m) return;
     const o = m.opt[state.bi], q = m.rank[state.bi];
     const g = q > 0 ? Math.round(((o - q) / q) * 100) : 0;
     const what = o - q > 0.05 ? `Network planning adds ${(o - q).toFixed(1)} river miles at ${money(budgetUsd())} (${q.toFixed(1)} → ${o.toFixed(1)}${q > 0 ? `, +${g}%` : ""}).` : `At ${money(budgetUsd())}, ranking one at a time does as well here (${o.toFixed(1)} mi).`;
-    tip.setLngLat(e.lngLat).setHTML(`<b>${esc(m.name)}</b>, ${m.n} assessed culverts<br>${what}${m.huc8 !== state.huc ? "<br><span class=\"tip-hint\">Click to open</span>" : ""}`).addTo(map);
+    tip.setLngLat(e.lngLat).setHTML(`<b>${esc(m.name)}</b>, ${m.n} assessed culverts<br>${what}${h !== state.huc ? "<br><span class=\"tip-hint\">Click to open</span>" : ""}`).addTo(map);
   });
-  map.getCanvas().addEventListener("mouseleave", () => { tip.remove(); setHover(null); });
+  map.on("mouseleave", "huc-fill", () => tip.remove());
   map.on("click", "huc-fill", (e) => {
     if (map.queryRenderedFeatures(e.point, { layers: ["culverts"] }).length) return;
     const h = e.features[0].properties.huc8;
     if (h !== state.huc) setState({ huc: h }, { fit: true });
   });
   animateFlow();
-}
-
-// One culvert at a time can be hovered, from the map or from the plan list.
-let hoverId = null;
-function setHover(id) {
-  if (!map || !map.getSource("culverts") || hoverId === id) return;
-  if (hoverId) map.setFeatureState({ source: "culverts", id: hoverId }, { hover: false });
-  hoverId = id;
-  if (id) map.setFeatureState({ source: "culverts", id }, { hover: true });
 }
 
 function animateFlow() {
@@ -600,7 +501,7 @@ function setState(patch, opts = {}) {
   renderMap(r);
   if (hucChanged && map) loadStreams(state.huc);
   if (opts.fit && map) map.fitBounds(bboxOf(state.huc), { padding: 40, duration: reduceMotion ? 0 : 900 });
-  history.replaceState(null, "", `#huc=${state.huc}&b=${BUDGETS[state.bi]}&p=${state.lam}${THEME !== "slate" ? `&theme=${THEME}` : ""}`);
+  history.replaceState(null, "", `#huc=${state.huc}&b=${BUDGETS[state.bi]}&p=${state.lam}`);
   return r;
 }
 

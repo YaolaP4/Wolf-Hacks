@@ -104,4 +104,4 @@ python, geopandas, shapely, pyogrio, numpy, pandas, javascript, maplibre-gl, htm
 - Demo: run locally with `python -m http.server 8765 --directory app` (or the hosted link, if deployed)
 
 ## AI disclosure
-We set the direction and made the decisions: a cross-model idea council to cut single-model bias and hallucinated data, the culvert idea, the roads-first framing, and the design changes. Claude (Claude Code) and GPT (through the Hermes agent) did much of the ideation, code and writing. The README has the full AI-usage section, with our prompts and how every number was checked.
+We used Claude (Claude Code) and GPT (through the Hermes agent) for ideation, code and writing. The README has the full AI-usage section with prompts and how we checked every number.
