@@ -14,6 +14,7 @@ const solutions = new Map();
 let map;
 let popup;
 let streamsLoaded = null;
+let flowCount = 0;
 
 /* ---------- helpers ---------- */
 const $ = (s) => document.querySelector(s);
@@ -204,10 +205,10 @@ function buildStyle(dem) {
       ...(dem.contours ? { contours: dem.contours } : {}),
     },
     layers: [
-      { id: "bg", type: "background", paint: { "background-color": "#f2f4ef" } },
-      { id: "wood", type: "fill", source: "omt", "source-layer": "landcover", filter: ["in", ["get", "class"], ["literal", ["wood", "forest"]]], paint: { "fill-color": "#dbe5d1", "fill-opacity": 0.55 } },
-      { id: "urban", type: "fill", source: "omt", "source-layer": "landuse", filter: ["in", ["get", "class"], ["literal", ["residential", "commercial", "industrial"]]], paint: { "fill-color": "#e9e4dc", "fill-opacity": 0.6 } },
-      { id: "shade", type: "hillshade", source: "dem", paint: { "hillshade-shadow-color": "#5e5245", "hillshade-highlight-color": "#ffffff", "hillshade-accent-color": "#7d6e5e", "hillshade-exaggeration": 0.42, "hillshade-illumination-direction": 315 } },
+      { id: "bg", type: "background", paint: { "background-color": "#e1e9d8" } },
+      { id: "wood", type: "fill", source: "omt", "source-layer": "landcover", filter: ["in", ["get", "class"], ["literal", ["wood", "forest"]]], paint: { "fill-color": "#c9d8bb", "fill-opacity": 0.6 } },
+      { id: "urban", type: "fill", source: "omt", "source-layer": "landuse", filter: ["in", ["get", "class"], ["literal", ["residential", "commercial", "industrial"]]], paint: { "fill-color": "#e6e4da", "fill-opacity": 0.65 } },
+      { id: "shade", type: "hillshade", source: "dem", paint: { "hillshade-shadow-color": "#46523a", "hillshade-highlight-color": "#ffffff", "hillshade-accent-color": "#5f6b4e", "hillshade-exaggeration": 0.42, "hillshade-illumination-direction": 315 } },
       ...(dem.contours ? [
         { id: "contour", type: "line", source: "contours", "source-layer": "contours", paint: { "line-color": "#9a6b43", "line-opacity": ["match", ["get", "level"], 1, 0.42, 0.2], "line-width": ["match", ["get", "level"], 1, 0.9, 0.45] } },
       ] : []),
@@ -216,8 +217,8 @@ function buildStyle(dem) {
       { id: "road-minor", type: "line", source: "omt", "source-layer": "transportation", minzoom: 10, filter: ["in", ["get", "class"], ["literal", ["minor", "service", "track"]]], paint: { "line-color": "#a9ada4", "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.3, 15, 1.6] } },
       { id: "road-major", type: "line", source: "omt", "source-layer": "transportation", filter: ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary", "secondary", "tertiary"]]], paint: { "line-color": "#b4553c", "line-opacity": 0.75, "line-width": ["interpolate", ["linear"], ["zoom"], 7, 0.5, 12, 1.6, 15, 3] } },
       { id: "state-line", type: "line", source: "omt", "source-layer": "boundary", filter: ["==", ["get", "admin_level"], 4], paint: { "line-color": "#7b8582", "line-width": 1, "line-dasharray": [3, 2] } },
-      { id: "water-name", type: "symbol", source: "omt", "source-layer": "water_name", layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Italic"], "text-size": 12 }, paint: { "text-color": "#2e6f99", "text-halo-color": "#f2f4ef", "text-halo-width": 1.4 } },
-      { id: "labels-place", type: "symbol", source: "omt", "source-layer": "place", filter: ["in", ["get", "class"], ["literal", ["city", "town", "village"]]], layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": ["match", ["get", "class"], "city", 14, "town", 12, 11] }, paint: { "text-color": "#33403f", "text-halo-color": "#f2f4ef", "text-halo-width": 1.6 } },
+      { id: "water-name", type: "symbol", source: "omt", "source-layer": "water_name", layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Italic"], "text-size": 12 }, paint: { "text-color": "#2e6f99", "text-halo-color": "#e8efe0", "text-halo-width": 1.4 } },
+      { id: "labels-place", type: "symbol", source: "omt", "source-layer": "place", filter: ["in", ["get", "class"], ["literal", ["city", "town", "village"]]], layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": ["match", ["get", "class"], "city", 14, "town", 12, 11] }, paint: { "text-color": "#33403f", "text-halo-color": "#e8efe0", "text-halo-width": 1.6 } },
     ],
   };
 }
@@ -282,7 +283,10 @@ function addDataLayers() {
   map.addLayer({ id: "streams-baseonly", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": "#9a6b43", "line-width": w(2.2), "line-dasharray": [1.2, 1] } }, before);
   map.addLayer({ id: "streams-glow", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": "#5fb3e4", "line-width": w(7), "line-blur": 5, "line-opacity": 0.6 } }, before);
   map.addLayer({ id: "streams-open", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], layout: { "line-cap": "round" }, paint: { "line-color": "#156ead", "line-width": w(3) } }, before);
-  map.addLayer({ id: "streams-flow", type: "line", source: "streams", filter: ["in", ["get", "net"], ["literal", []]], paint: { "line-color": "#e9f6ff", "line-width": w(0.9), "line-dasharray": [0, 4, 3] } }, before);
+  // The animated flow dashes live on a small source holding only the reconnected rivers.
+  // Changing line-dasharray re-tiles the layer's whole source, so it must not sit on "streams".
+  map.addSource("flow", { type: "geojson", data: empty });
+  map.addLayer({ id: "streams-flow", type: "line", source: "flow", paint: { "line-color": "#e9f6ff", "line-width": w(0.9), "line-dasharray": [0, 4, 3] } }, before);
   map.addLayer({ id: "links", type: "line", source: "links", paint: { "line-color": ["case", ["get", "open"], "#1c7fc1", "#8e948d"], "line-width": ["case", ["get", "open"], 2.4, 1], "line-dasharray": [2, 1.5] } }, before);
   map.addLayer({
     id: "culverts", type: "circle", source: "culverts",
@@ -324,15 +328,21 @@ function animateFlow() {
   const seq = [[0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5], [3, 4, 0], [0, 0.5, 3, 3.5], [0, 1, 3, 3], [0, 1.5, 3, 2.5], [0, 2, 3, 2], [0, 2.5, 3, 1.5], [0, 3, 3, 1], [0, 3.5, 3, 0.5]];
   let i = 0;
   setInterval(() => {
-    if (!map.getLayer("streams-flow") || document.hidden) return;
+    if (!flowCount) return;
+    if (!map.getLayer("streams-flow") || document.hidden || document.body.classList.contains("cinema")) return;
     map.setPaintProperty("streams-flow", "line-dasharray", seq[i]);
     i = (i + 1) % seq.length;
-  }, 70);
+  }, 90);
 }
 
-async function loadStreams(huc) {
-  if (streamsLoaded === huc) return;
+function loadStreams(huc) {
+  if (streamsLoaded === huc) return DATA.streamsReady;
   streamsLoaded = huc;
+  DATA.streamsGeo = null;
+  DATA.streamsReady = loadStreamsNow(huc);
+  return DATA.streamsReady;
+}
+async function loadStreamsNow(huc) {
   const has = DATA.streamManifest?.hucs?.includes(huc);
   const gj = has ? await getJSON(`./data/streams/streams_${huc}.geojson`, true) : null;
   if (streamsLoaded !== huc) return;
@@ -354,7 +364,11 @@ function renderMap(r) {
   map.getSource("culverts").setData({ type: "FeatureCollection", features: feats });
   const open = [...plan.open];
   const baseOnly = show ? [...base.open].filter((x) => !plan.open.has(x)) : [];
-  for (const id of ["streams-glow", "streams-open", "streams-flow"]) map.setFilter(id, ["in", ["get", "net"], ["literal", open]]);
+  for (const id of ["streams-glow", "streams-open"]) map.setFilter(id, ["in", ["get", "net"], ["literal", open]]);
+  const openSet = new Set(open);
+  const flowFeats = DATA.streamsGeo ? DATA.streamsGeo.features.filter((f) => openSet.has(f.properties.net)) : [];
+  flowCount = flowFeats.length;
+  map.getSource("flow").setData({ type: "FeatureCollection", features: flowFeats });
   map.setFilter("streams-baseonly", ["in", ["get", "net"], ["literal", baseOnly]]);
   map.setFilter("huc-sel", ["==", ["get", "huc8"], state.huc]);
   map.setPaintProperty("huc-fill", "fill-color", hucFillColor());
@@ -536,8 +550,10 @@ function mark(at) {
   map.getSource("cine-mark").setData({ type: "FeatureCollection", features: at ? [{ type: "Feature", geometry: { type: "Point", coordinates: at }, properties: {} }] : [] });
 }
 
-function flyover(id) {
+async function flyover(id) {
   if (popup) popup.remove();
+  // The flyover traces and highlights rivers, so wait for this watershed's stream data.
+  await (loadStreams(state.huc) || Promise.resolve());
   showTour(-1);
   const r = compute();
   const { s, plan, base, planSet } = r;
@@ -563,6 +579,7 @@ function flyover(id) {
       inPlan: planSet.has(id), n: plan.n, miles: plan.miles, floodPct: Math.round((plan.flood / s.F) * 100), delta: plan.miles - base.miles,
       budget: money(budgetUsd()), lam: lamLabel(state.lam).toLowerCase(), rank: order.findIndex((q) => q.id === id) + 1, N: s.items.length, enter,
       parent: d.parent && s.byId.has(d.parent) ? s.byId.get(d.parent).rec : null,
+      upstream: (s.children.get(id) || []).map((c) => s.byId.get(c).rec),
       chainCount: chain.length - 1, chainMiles: chainEval.miles, chainCost: chain.reduce((t, c) => t + s.byId.get(c).rec.cost, 0),
     },
     planBounds: () => ({ bounds: [[Math.min(...lons) - 0.02, Math.min(...lats) - 0.02], [Math.max(...lons) + 0.02, Math.max(...lats) + 0.02]] }),

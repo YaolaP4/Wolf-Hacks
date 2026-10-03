@@ -333,3 +333,14 @@ body.cinema .panel, body.cinema .legend, body.cinema .map-tools, body.cinema .ma
   .cine-xs { width: calc(100vw - 44px); }
   .cine-caption { font-size: 16px; }
 }
+
+/* Flyover map pins and paused state */
+.cine-pin { display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+.cine-pin-label { padding: 5px 10px; border-radius: 999px; font: 700 13px/1.2 var(--ui); white-space: nowrap; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); }
+.cine-pin-dot { width: 2px; height: 26px; margin-top: 2px; background: currentColor; }
+.cine-pin--this { color: #ffffff; }
+.cine-pin--this .cine-pin-label { background: #ffffff; color: #0f2a3a; }
+.cine-pin--amber { color: #f5a524; }
+.cine-pin--amber .cine-pin-label { background: #f5a524; color: #1f1400; }
+.cine.paused .cine-caption::after { content: "Paused"; margin-left: 10px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.18); font-size: 13px; vertical-align: middle; }
+.cine-xs-head, .cine-xs-note { color: #111111; }

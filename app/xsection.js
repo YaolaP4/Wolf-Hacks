@@ -30,7 +30,7 @@ export function crossSection(container, opts = {}) {
     return node;
   }
   const svg = el("svg", {
-    viewBox: "0 0 640 300", width: "100%", role: "img",
+    viewBox: "0 0 640 352", width: "100%", role: "img",
     "aria-labelledby": `${uid}-title ${uid}-description`,
     style: "display:block;width:100%;height:auto;overflow:hidden",
     "font-family": "system-ui, sans-serif", "font-size": 12
@@ -57,7 +57,7 @@ export function crossSection(container, opts = {}) {
   const scene = el("g", {}, svg);
 
   function text(x, y, value, extra = {}) {
-    return el("text", { x, y, fill: colors.ink, ...extra }, scene, value);
+    return el("text", { x, y, fill: "#111111", ...extra, ...(extra.fill ? { fill: "#111111" } : {}) }, scene, value);
   }
   function dimension(x1, x2, y, label) {
     el("path", {
@@ -67,7 +67,7 @@ export function crossSection(container, opts = {}) {
           M${x2 - 5} ${y - 3}L${x2} ${y}L${x2 - 5} ${y + 3}`,
       fill: "none", stroke: colors.muted, "stroke-width": 1
     }, scene);
-    text((x1 + x2) / 2, y - 7, label, { "text-anchor": "middle" });
+    text((x1 + x2) / 2, y - 9, label, { "text-anchor": "middle", "font-size": 13 });
   }
   function configure(v, r) {
     if (v !== "existing" && v !== "fixed") {
@@ -91,7 +91,7 @@ export function crossSection(container, opts = {}) {
       : { x: geometry.left, y: 139, width, height: 105 };
     const openingTag = variant === "existing" ? "circle" : "rect";
     el(openingTag, openingAttrs, openingClip);
-    el("rect", { width: 640, height: 300, fill: colors.paper }, scene);
+    el("rect", { width: 640, height: 352, fill: colors.paper }, scene);
     el("path", {
       d: "M0 62L100 62L225 226H415L540 62H640V252H0Z",
       fill: `url(#${uid}-soil)`
@@ -167,13 +167,13 @@ export function crossSection(container, opts = {}) {
       fill: "none", stroke: colors.paper, "stroke-width": 1.6,
       "stroke-linecap": "round"
     }, spill));
-    const stage = text(18, 25, "");
-    text(622, 49, String(opts.roadLabel ?? "Stream crossing"), { "text-anchor": "end" });
-    const status = text(320, 76, "", { "text-anchor": "middle" });
-    dimension(geometry.left, geometry.right, 266,
+    const stage = text(16, 26, "", { "font-size": 14, "font-weight": 700 });
+    text(624, 26, String(opts.roadLabel ?? "Stream crossing"), { "text-anchor": "end", "font-size": 13 });
+    const status = text(320, 80, "", { "text-anchor": "middle", "font-size": 14, "font-weight": 700, stroke: "#ffffff", "stroke-width": 4, "paint-order": "stroke", "stroke-linejoin": "round" });
+    dimension(geometry.left, geometry.right, 286,
       `Opening ≈ ${Math.round(ratio * bankfull)} ft`);
-    dimension(210, 430, 290, `Stream ≈ ${bankfull} ft wide`);
-    text(12, 294, "Illustration, not to scale", { fill: colors.muted });
+    dimension(210, 430, 326, `Stream ≈ ${bankfull} ft wide`);
+    text(16, 346, "Illustration, not to scale", { "font-size": 11 });
     nodes = { inside, water, highlight, spill, streaks, stage, status };
     title.textContent = variant === "existing"
       ? "Existing culvert flood cross-section" : "Open-bottom crossing flood cross-section";
@@ -212,7 +212,7 @@ export function crossSection(container, opts = {}) {
     const message = overtops ? "Road overtops"
       : variant === "fixed" && level >= 0.6 ? "Flood passes under" : "";
     nodes.status.textContent = message;
-    nodes.status.setAttribute("fill", overtops ? colors.accent : colors.water);
+    nodes.status.setAttribute("fill", "#111111");
     description.textContent = `${label}. ${message || "Water flows through the opening."}`;
   }
   const ease = t => t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;

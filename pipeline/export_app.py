@@ -75,6 +75,7 @@ def main() -> None:
             "slideMi": clean(r.helene_nearest_slide_mi),
             "anchorXY": list(dam_xy[r.downstreambarriersarpid][:2]) if not isinstance(r.parent, str) and r.downstreambarriersarpid in dam_xy else None,
             "anchorName": dam_xy[r.downstreambarriersarpid][2] if not isinstance(r.parent, str) and r.downstreambarriersarpid in dam_xy else None,
+            "anchorId": r.downstreambarriersarpid if not isinstance(r.parent, str) and isinstance(r.downstreambarriersarpid, str) else None,
             "url": clean(r.url),
         })
     (APP / "culverts.json").write_text(json.dumps(culverts, separators=(",", ":")))
