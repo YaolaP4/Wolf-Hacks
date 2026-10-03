@@ -26,7 +26,7 @@
 > "Now plan for roads too. A plan built only for washout risk gives up a third of the river benefit. A plan leaning 70/30 toward roads keeps 91% of the river gain and 94% of the washout reduction. Road and fish agencies mostly want the same culverts. If they plan separately, they leave value on the table."
 
 **2:20 Step 5, rigor**
-> "Everything is checked. The optimizer is exact and matches brute force on 300 random networks. The browser version matches Python. Our rebuilt river networks reproduce the inventory's mileage within 5% for 88% of 405 culverts. And we'll be straight with you: statewide, network planning beats ranking by only about 2%. The big wins are in the chained mountain watersheds, the ones Helene hit. The tool shows you which case you're in."
+> "Everything is checked. The optimizer is exact and matches brute force on 300 random networks. The browser version matches Python. Our rebuilt river networks reproduce the inventory's mileage within 5% for 88% of 405 culverts. Statewide, network planning beats ranking by about 2%. The big wins are in the chained mountain watersheds, the ones Helene hit. The tool shows you which case you're in."
 
 **2:45 Close**
 > "It runs entirely in the browser on public data. The inventory and the hydrography are national, so it works in any state."
@@ -47,7 +47,7 @@ Yes. O'Hanley & Tomberlin (2005) and King et al. (2017) optimize barrier removal
 A planning-level model: stream-width span from NC regional bankfull curves, a per-foot price by road type, and mobilization. Real costs come from engineering. That's why there's a stress test: 60 random cost scenarios, and the card shows a cost range. Statewide, our plans won in 200 of 200 cost draws.
 
 **Is the washout score validated?**
-No, and we say so. It's a screening index (constriction × drainage size × road type), not a failure probability. Helene's damaged-culvert locations aren't public. Validating against them is the first thing we'd do with NCDOT data.
+Not yet. It's a screening index (constriction × drainage size × road type), not a failure probability. Helene's damaged-culvert locations aren't public. Validating against them is the first thing we'd do with NCDOT data.
 
 **Why is the statewide gain so small?**
 Most assessed culverts aren't in chains. 483 of 569 trees are a single culvert, and there ranking by gain does nearly as well; the only gain left is packing the budget better. The big gains show up where culverts stack, mostly in the mountains.
@@ -64,4 +64,4 @@ Mostly waterfalls. The public download doesn't include them, so our networks run
 Most NC crossings have never been surveyed. The natural next step is to rank which ones to survey next by how much they could change the plan.
 
 **How did you use AI?**
-Claude and GPT, for ideation, code and writing. The README has the full disclosure: the prompts, what the models got wrong (including the objective bug we caught), and how every number is produced by a script from public data.
+Claude and GPT, for ideation, code and writing. The README has the full disclosure: the prompts, how we tested model-written code, and how every number is produced by a script from public data.

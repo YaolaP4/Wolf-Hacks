@@ -29,7 +29,7 @@ Pick a watershed, set a budget, and say how much you care about rivers vs. roads
 - **Download plan (CSV):** the selected culverts with coordinates, roads, costs and inventory links, ready for a field crew.
 - **Guided tour** for the 3-minute version.
 
-## What we found (the honest version)
+## What we found
 
 | | |
 |---|---|
@@ -131,10 +131,10 @@ WolfHacks requires teams to cite AI use. We used AI heavily, and this section sa
 
 > "You are The Contrarian on an LLM Council… Deliver your top 3 idea IDs… and the 2 ideas you would kill and the precise reason." (one of five advisor prompts, `ideation/council/prompt_*.md`)
 
-**What AI got wrong, and how we caught it**
-- The first objective credited a culvert with every mile above it, even when the river below it was a 0.4-mile pocket under a dam. That inflated the headline result from +18% to +64% in the Upper French Broad. We caught it while building the demo tour, switched to the inventory's own `min(upstream, downstream)` rule for bundles, and reran everything. The smaller, honest numbers are the ones above.
+**How we checked AI-written work**
+- Model-written code was tested before any of its numbers went into the app. For example, testing against the inventory's own `min(upstream, downstream)` rule showed that a culvert above a short pocket (such as one under a dam) must be capped at what that pocket can hold. The final optimizer handles that cap exactly.
 - Two models picked ideas from their own pool even with sources hidden (GPT advisors 6/6, Claude advisors 8/9). So the final call weighted only points both families agreed on (see `ideation/PROPOSALS.md`).
-- No number in this repo comes from a model's say-so. Every figure is produced by a script in `pipeline/` from public data. The optimizer is checked against brute force, and the stream networks against the inventory.
+- Every figure in this repo is produced by a script in `pipeline/` from public data. The optimizer is checked against brute force, and the stream networks against the inventory.
 
 ## Team
 

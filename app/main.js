@@ -617,7 +617,7 @@ function methodsHTML() {
     ${mc ? `<li><b>${Math.round(mc.share_draws_optimal_better_than_rank_gain * 200)} / 200</b><span>Cost scenarios (each culvert's cost multiplied by a lognormal factor, σ = 0.5) in which the network-aware plans reconnect more river statewide than one-at-a-time ranking at $5M per watershed.</span></li>` : ""}
   </ul>
 
-  <h3>What we found, without the hype</h3>
+  <h3>What we found</h3>
   <ul>
     <li>Network planning matters where culverts sit in chains. On Cherry Creek near Canton, two culverts in a row each open only 1.4 miles alone, so ranking skips both. Together they reconnect 8.2 miles, and $1M in the Pigeon watershed goes from 7.2 to 12.6 river miles (+75%). On Whiteoak Creek in the Upper Little Tennessee, two culverts that each score zero on their own open 9.6 miles together. Ranking one at a time can never find that pair.</li>
     ${b5 ? `<li>Most of North Carolina has few chains, and there ranking does nearly as well. Across the ${S.watersheds} watersheds with at least 15 assessed culverts, the network-aware plans reconnect ${b5.miles_optimal} miles vs ${b5.miles_rank_gain} at $5M each (+${Math.round((b5.x_vs_rank_gain - 1) * 100)}%). In the Upper French Broad at $2M the gain is +18% (46.6 vs 39.6 miles).</li>` : ""}

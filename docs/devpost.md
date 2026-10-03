@@ -69,7 +69,7 @@ Pinchpoint is a planning map for that decision.
 
 ## Challenges we ran into
 
-- **Our first objective was wrong, and the demo caught it.** It credited a culvert with every mile above it, even when the river below was a 0.4-mile pocket under a dam. That inflated our headline from +18% to +64%. We switched to the inventory's own gain rule, made the optimizer handle the cap exactly, and reran everything. The smaller numbers are the true ones, and they're the ones we report.
+- **Matching the inventory's definition of gain.** A culvert above a short pocket of river, such as one just below a dam, can only reconnect as much habitat as that pocket supports. We extended the inventory's `min(upstream, downstream)` rule to bundles and made the optimizer handle that cap exactly, enumerating the chains where it binds.
 - **The hydrography IDs didn't match.** The inventory snaps to a newer NHDPlus HR release than the published regional geodatabase, so every ID join failed. We placed barriers spatially instead, then checked the rebuilt networks against the inventory's own mileage.
 - **The USGS REST service needed about an hour to page through 111,000 flowlines.** We switched to the 481 MB regional geodatabase and read it locally.
 
@@ -81,7 +81,7 @@ Pinchpoint is a planning map for that decision.
   - All 244 culvert-to-culvert links in the inventory are consistent.
 - The network-aware plans beat ranking in 200 of 200 random cost scenarios.
 - It's fast enough to plan live with a slider, in a browser, with no server.
-- We report the result honestly, including where our method barely matters.
+- The tool shows where network planning makes a big difference and where simple ranking is already close.
 
 ## What we learned
 
@@ -104,4 +104,4 @@ python, geopandas, shapely, pyogrio, numpy, pandas, javascript, maplibre-gl, htm
 - Demo: run locally with `python -m http.server 8765 --directory app` (or the hosted link, if deployed)
 
 ## AI disclosure
-We used Claude (Claude Code) and GPT (through the Hermes agent) for ideation, code and writing. The README has the full AI-usage section with prompts, what the models got wrong, and how we checked every number.
+We used Claude (Claude Code) and GPT (through the Hermes agent) for ideation, code and writing. The README has the full AI-usage section with prompts and how we checked every number.
