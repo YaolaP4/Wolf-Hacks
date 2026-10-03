@@ -1,0 +1,8 @@
+**1. Strongest: E.** E is the only response that turns the student's stated value (claims they can defend) into an explicit filter: is there VERIFIED outcome data that can be scored by Sunday? It applies that filter consistently. It also makes the council's sharpest catch: an address in I10's New Locations may belong to a house built later, not one 911 missed, and E fixes the back-test with a year-built filter. Its version of I08 partly answers A's and D's objections by scoring at county level only and testing competing hypotheses. Weakness: tower, power and corridor failures all rise with storm severity. The null should therefore be rainfall or flood exposure, not towers per county.
+
+**2. Biggest blind spot: B.** Every pick is a merge (I08+I14, I12+I10, I15+I16). That roughly doubles scope for a small team with 14 to 18 hours. B also attaches I14, whose output no one can validate, to I08's assumed backhaul map. And it ignores A's point that no VERIFIED data shows which buildings are hardened shelters. C has the same shelter gap and gets the demo time wrong: 11:00 is the submission deadline, and demos start at 12:30.
+
+**3. Missed by all:**
+- Track fit and Design are half the score. Yet no response tied an idea to the Center's own work (PoPS, FUTURES), and none described what the named user actually sees and clicks.
+- No one budgeted time for data wrangling. Processing 3DEP and NHDPlus HR, snapping, and flow accumulation for mountain counties can eat the whole night. The team needs precomputed results and a fallback study area.
+- I08 got two top picks (B, E) and two kills (A, D). That is the council's central disagreement, and it should be settled explicitly rather than averaged away.

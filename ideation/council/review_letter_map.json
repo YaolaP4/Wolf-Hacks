@@ -1,0 +1,10 @@
+{
+  "seed": 20261004,
+  "map": {
+    "A": "outsider",
+    "B": "expansionist",
+    "C": "executor",
+    "D": "contrarian",
+    "E": "firstprinciples"
+  }
+}

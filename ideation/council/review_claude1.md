@@ -1,0 +1,8 @@
+**1. Strongest: E.** It uses the right filter for this student and these judges: does a VERIFIED outcome exist for the core claim, and can it be scored by Sunday? Each change it proposes is a validation step, not a new feature. It scores I08 as competing hypotheses against a null model, at county level only. It keeps hazard and consequence on separate axes for I13+I01. For I10 it adds a year-built filter, which removes the "address added because the house is new" confound. No other response caught that. D is the sharpest critic ("matching those totals could reward an entirely wrong network"), but it gives weaker validation for its own picks.
+
+**2. Biggest blind spot: B.** It chases upside and ignores whether the claims can be checked. It picks I08 without addressing the missing fiber routes, then merges in I14, whose RF claims can't be validated. Its I15+I16 frontier depends on I16's UNVERIFIED closure back-test. Its I12 pick ignores A's point that no data identifies which buildings are hardened shelters. That makes three merges in 14–18 hours, none with an outcome that can be scored. That runs against the student's "defensible claims" brief.
+
+**3. What all five missed:**
+- Design is 25% of the score, yet no response says what the intended user would actually see or click.
+- The clock: about 5.5 venue hours today and 2 on Sunday before submission, with the rest off-site. Only C set a go/no-go check (for I10). No one budgeted time for DEM flow accumulation, NHDPlus/NABI snapping, or other data preparation.
+- None used the center's own research (PoPS, FUTURES, Tangible Landscape) as a tiebreaker for track fit.
