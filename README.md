@@ -113,19 +113,33 @@ Raw data is fetched from public endpoints (see `notes/plan.md`). The NABI CSVs c
 
 ## AI usage
 
-WolfHacks requires teams to cite AI use. We used AI heavily, and this section says where and how we checked it.
+WolfHacks asks teams to cite AI use. We set the direction and made the decisions. AI tools did much of the writing and coding, and everything they produced was tested before it went into the app.
+
+**What we decided**
+- **How to generate ideas.** Instead of asking one model for ideas, we ran a cross-model "LLM council," adapted from Karpathy's LLM Council: two model families generate ideas independently, five advisor lenses judge them, peer review is anonymized, and a chairman synthesizes. Our goal was to cut single-model bias and hallucinated datasets, so every dataset had to check out against a live source before an idea could advance.
+- **What to build.** We picked the culvert idea from three finalists. We also set the framing requirement: lead with roads and floods, so the impact is obvious to someone who has never thought about culverts.
+- **The rules.** The build follows the WolfHacks requirements exactly: one track, AI citation in the README, and the submission deadlines.
+- **The product.** We reviewed the app and directed the changes: the key row in the plan list, hover emphasis on the map, the color scheme, and the tone of the write-up.
 
 **Tools**
-- **Claude (Anthropic), through Claude Code:** idea generation; the data pipeline, optimizer, tests and web app code; and drafting this README and the DevPost text.
-- **GPT (OpenAI), through the Hermes agent CLI:** an independent second idea pool, and two of the advisor and peer-reviewer seats in an idea "council." We used two model families so one model's blind spots and self-preference would not decide the project. The full council transcript, prompts and outputs are in `ideation/council/`.
+- **Claude (Anthropic), through Claude Code:** ran the ideation workflow; wrote the data pipeline, optimizer, tests and web app; drafted this README and the DevPost text.
+- **GPT (OpenAI), through the Hermes agent CLI on our own subscription:** wrote an independent second idea pool and held two advisor seats and two peer-reviewer seats in the council. The full council transcript, prompts and outputs are in `ideation/council/`.
 
-**How we chose the idea.** Each model wrote its own idea pool without seeing the other's (`ideation/claude_divergent.md`, `ideation/hermes_divergent_raw.md`). We verified every dataset against a live endpoint. Then a five-advisor council judged the source-blinded pool, and peer reviewers from both models critiqued it (`ideation/council/`). We picked the culvert idea from the three finalists in `ideation/PROPOSALS.md`.
+**How the idea was chosen.** Each model wrote its own idea pool without seeing the other's (`ideation/claude_divergent.md`, `ideation/hermes_divergent_raw.md`). Every dataset was checked against a live endpoint. Then the council judged the pool with sources hidden, and peer reviewers from both models critiqued it (`ideation/council/`). We chose from the three finalists in `ideation/PROPOSALS.md`.
 
-**Prompts we used** (excerpts; full text in the repo):
+**Our prompts** (excerpts, lightly edited for spelling):
 
-> "Approach this hackathon track from a different perspective… create a genuinely unique (not just a win hackathon type) of solution. Propose me 3 different potential ideas… use hermes… to get potentially different perspectives." (team to Claude)
+> "I'm going to link the repository for model council to reduce a specific bias and hallucinations… create a genuinely unique (not just a win-hackathon type of) solution. Propose 3 different potential ideas… You can use Hermes… to get potentially different perspectives."
 
-> "I like the culvert idea… make it into something presentable. A judge shouldn't look at it and be like 'it seems extremely specific and not high impact' since culverts aren't something people think about much at all, so frame it accordingly. Read the requirements exactly." (team to Claude)
+> "I like the culvert idea… A judge shouldn't look at it and be like 'it seems extremely specific and not high impact,' since culverts aren't something people think about much at all, so frame it accordingly. Read the requirements exactly."
+
+> "In the plan section, make an example entry above all of the culverts, formatted like a culvert, but with a parenthesis saying what each value represents."
+
+> "Whenever the mouse hovers over a culvert, make it pop a little so it's emphasized."
+
+> "The blue dots with the brown outline don't match. It should look simple, but also sleek and modern."
+
+**Prompts the workflow sent to the models** (written from our brief; full text in `ideation/`):
 
 > "PART 1 – THE MODE. List the 15 project ideas that most teams in this track will predictably build… These are banned for Part 2. PART 2 – EIGHT IDEAS OUTSIDE THE MODE… Give the publisher and URL ONLY if you are confident it exists… otherwise write UNVERIFIED." (to GPT, `ideation/prompts/hermes_divergent.md`)
 
