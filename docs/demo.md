@@ -9,7 +9,7 @@
 ## Script
 
 **0:00 Hook (intro card is on screen)**
-> "Every road that crosses a stream squeezes it through a pipe, a culvert. When Helene hit western North Carolina, 852 of them were among the damaged road sites. Undersized culverts fail twice. In a flood they plug and the road washes out. The rest of the time they're a wall: fish below can't reach the river above. The fix is the same for both, a crossing as wide as the stream. The question is which ones to fix first when you can't afford all of them."
+> "Every road that crosses a stream squeezes it through a pipe, a culvert. When Helene hit western North Carolina, NCDOT counted 867 damaged culverts among more than 9,000 damaged road sites. Undersized culverts fail twice. In a flood they plug and the road washes out. The rest of the time they're a wall: fish below can't reach the river above. The fix is the same for both, a crossing as wide as the stream. The question is which ones to fix first when you can't afford all of them."
 
 **0:30 Tour step 1, Upper French Broad**
 > "This is the watershed around Asheville. Every dot is a culvert that field crews assessed as a barrier. The data comes from the national barrier inventory's public API. The blue lines are river networks we rebuilt from USGS high-resolution hydrography."

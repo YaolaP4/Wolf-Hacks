@@ -10,7 +10,7 @@
 
 ## Framing (answering "culverts are niche")
 Lead with roads and floods, then money, then rivers.
-- Helene damaged 8,795 NC transportation sites, including 852 culverts (NCDOT, early 2025). Transportation recovery is about $5.8B.
+- Helene: 9,307 damage sites including 867 culverts (NCDOT via Carolina Journal, Jan 2025); nearly 9,500 sites and about $5.8B recovery (828 News NOW, Sep 2026).
 - Undersized culverts both wash out in floods and block fish. Stream-simulation crossings survived Irene while undersized ones failed (Gillespie et al. 2014, *Fisheries* 39(2):62-76).
 - $1B federal Culvert AOP program (IIJA, FY22-26). NC won 1 project ($472k) in FY22.
 - The method gap: the public prioritization tool ranks barriers one at a time, but rivers are networks. An upstream culvert is worth nothing until the one below is fixed. One-at-a-time ranking wastes money.

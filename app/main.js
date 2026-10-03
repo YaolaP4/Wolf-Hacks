@@ -629,7 +629,7 @@ function methodsHTML() {
   <ul>
     <li>Costs are planning-level estimates: a stream-width span from NC regional bankfull curves, times a per-foot price by road type, plus mobilization. Real costs come from engineering. The stress test and the cost scenarios above show how much the plan depends on them.</li>
     <li>The washout score is a screening index (constriction × drainage size × road type), not a failure probability. Helene's damaged-culvert locations are not public, so it has not been checked against real failures.</li>
-    <li>Only culverts that field crews assessed are candidates: 800 statewide that cut the network. Most of NC's road crossings have never been surveyed.</li>
+    <li>Only culverts that field crews assessed are candidates: the 800 barriers statewide that cut a stream network. Most of NC's road crossings have never been surveyed.</li>
     <li>Dams and waterfalls are treated as permanent. Habitat is counted in miles, not by species or quality.</li>
   </ul>
 

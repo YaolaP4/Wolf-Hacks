@@ -17,7 +17,7 @@ Center for Geospatial Analytics
 
 ## Inspiration
 
-When Hurricane Helene hit western North Carolina, NCDOT logged 8,795 damaged transportation sites, and 852 of them were culverts: the pipes that carry streams under roads. Transportation recovery is now estimated near $5.8 billion.
+When Hurricane Helene hit western North Carolina, it damaged nearly 9,500 sites on state roads. By January 2025 NCDOT had counted 867 damaged culverts: the pipes that carry streams under roads. NCDOT now puts transportation recovery at about $5.8 billion.
 
 Most people never think about culverts, but they sit wherever a road meets a stream. When one is narrower than the stream, it fails twice. In a flood it plugs and the road washes out. The rest of the time it is a wall: fish below can't reach the river above. The fix for both is the same, a crossing as wide as the stream. After Tropical Storm Irene, stream-width crossings in Vermont came through intact while undersized pipes failed (Gillespie et al. 2014).
 

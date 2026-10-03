@@ -10,8 +10,8 @@ WolfHacks 2026 · Center for Geospatial Analytics track: *use geospatial data to
 
 Every place a road crosses a stream, the water goes through a culvert. When the culvert is narrower than the stream, it fails twice:
 
-- **In floods it plugs and washes the road out.** Hurricane Helene damaged 8,795 transportation sites in western North Carolina, including 852 culverts (NCDOT, early 2025). NCDOT puts transportation recovery at about $5.8 billion.
-- **The rest of the time it walls the river off.** Fish below cannot reach the habitat above. The National Aquatic Barrier Inventory lists 800 field-assessed culverts in NC that cut a stream network.
+- **In floods it plugs and washes the road out.** Hurricane Helene damaged nearly 9,500 sites on western North Carolina's state roads. NCDOT's January 2025 count included 867 culverts. NCDOT puts transportation recovery at about $5.8 billion.
+- **The rest of the time it walls the river off.** Fish below cannot reach the habitat above. In NC, field crews have assessed 887 road crossings that cut a stream network; 800 of them are barriers to fish (National Aquatic Barrier Inventory).
 
 The fix is the same for both: a crossing as wide as the stream. After Tropical Storm Irene, stream-width crossings in Vermont came through largely undamaged while undersized pipes failed (Gillespie et al. 2014). There is money for it: a $1B federal culvert program (Bipartisan Infrastructure Law, FY22–26) and Helene rebuilding funds. But there is not enough money for all of them, so someone has to choose.
 
@@ -97,7 +97,7 @@ Raw data is fetched from public endpoints (see `notes/plan.md`). The NABI CSVs c
 
 - **Costs are planning-level estimates:** stream-width span from NC regional bankfull curves, times a per-foot price by road type, plus mobilization. The stress test shows how much the plan depends on them.
 - **The washout score is a screening index**, not a failure probability. Helene's damaged-culvert locations are not public, so we could not check it against real failures. That is the first thing we would validate with NCDOT data.
-- **Only field-assessed culverts are candidates** (800 that cut the network). Most NC road crossings have never been surveyed.
+- **Only field-assessed culverts are candidates** (the 800 assessed barriers that cut a network). Most NC road crossings have never been surveyed.
 - **Dams and waterfalls are permanent.** Waterfalls are not in the public download, which is most of why 12% of rebuilt networks miss by more than 5%.
 - **Habitat is counted in miles**, not by species or habitat quality.
 
@@ -109,7 +109,7 @@ Raw data is fetched from public endpoints (see `notes/plan.md`). The NABI CSVs c
 - Gillespie, N. et al. 2014. Flood effects on road–stream crossing infrastructure: economic and ecological benefits of stream simulation designs. *Fisheries* 39(2):62–76.
 - Cote, D. et al. 2009. A new measure of longitudinal connectivity for stream networks. *Landscape Ecology* 24:101–113.
 - Prior work on optimizing barrier removal: O'Hanley, J. R. & Tomberlin, D. 2005. Optimizing the removal of small fish passage barriers. *Environmental Modeling & Assessment* 10(2):85–98. King, S. et al. 2017. A toolkit for optimizing fish passage barrier mitigation actions. *Journal of Applied Ecology*. Pinchpoint brings this kind of optimization to NC's public inventory, jointly with flood risk, in the browser.
-- Helene damage counts: NCDOT via Blue Ridge Public Radio (June 2025); recovery cost via NC Newsline. Culvert grant program: FHWA.
+- Helene damage: NCDOT figures reported by Carolina Journal (22 Jan 2025: 9,307 damage sites including 867 culverts) and 828 News NOW (26 Sep 2026: nearly 9,500 sites, about $5.8B recovery). Culvert grant program: FHWA.
 
 ## AI usage
 
