@@ -44,6 +44,8 @@ def main() -> None:
 
     dams = pd.read_csv(ROOT / "data" / "raw" / "nabi_dams_NC.csv", usecols=["sarpid", "lat", "lon", "name"], low_memory=False)
     dam_xy = {r.sarpid: (round(r.lon, 6), round(r.lat, 6), r.name if isinstance(r.name, str) else None) for r in dams.itertuples()}
+    sb = pd.read_csv(ROOT / "data" / "raw" / "nabi_small_barriers_NC.csv", usecols=["sarpid", "barrierownertype"], low_memory=False)
+    owner = {k: v for k, v in zip(sb.sarpid, sb.barrierownertype) if isinstance(v, str) and v != "Unknown"}
     culverts = []
     for r in df.itertuples():
         culverts.append({
@@ -76,7 +78,7 @@ def main() -> None:
             "anchorXY": list(dam_xy[r.downstreambarriersarpid][:2]) if not isinstance(r.parent, str) and r.downstreambarriersarpid in dam_xy else None,
             "anchorName": dam_xy[r.downstreambarriersarpid][2] if not isinstance(r.parent, str) and r.downstreambarriersarpid in dam_xy else None,
             "anchorId": r.downstreambarriersarpid if not isinstance(r.parent, str) and isinstance(r.downstreambarriersarpid, str) else None,
-            "url": clean(r.url),
+            "owner": owner.get(r.sarpid),
         })
     (APP / "culverts.json").write_text(json.dumps(culverts, separators=(",", ":")))
 

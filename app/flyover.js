@@ -9,6 +9,7 @@ const FOREST = "#2f4630"; // shows where satellite tiles haven't loaded yet
 const AMBER = "#f5a524";
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const $ = (s) => document.querySelector(s);
+const KEY = matchMedia("(hover: hover)").matches ? " (space)" : ""; // no keyboard hint on touch screens
 
 /* ---------- words ---------- */
 function prettyStream(r) {
@@ -167,7 +168,8 @@ function pin(map, at, label, kind) {
   el.className = `cine-pin cine-pin--${kind}`;
   el.innerHTML = `<span class="cine-pin-label"></span><i class="cine-pin-dot"></i>`;
   el.querySelector(".cine-pin-label").textContent = label;
-  return new window.maplibregl.Marker({ element: el, anchor: "bottom" }).setLngLat(at).addTo(map);
+  // Stay fully visible even when a ridge sits between the camera and the pin.
+  return new window.maplibregl.Marker({ element: el, anchor: "bottom", opacity: "1", opacityWhenCovered: "1" }).setLngLat(at).addTo(map);
 }
 
 /* ---------- the flyover ---------- */
@@ -280,8 +282,8 @@ export async function startFlyover(ctx) {
     {
       title: "Why it's in the plan",
       say: P.inPlan
-        ? `With a ${P.budget} budget, Pinchpoint picks ${P.n} culverts to fix in this watershed, and this is one of them. Together they reopen ${mi(P.miles)} of creek and remove ${P.floodPct}% of the area's washout risk${P.delta > 0.05 ? `. That's ${mi(P.delta)} more than picking the best culverts one at a time` : ""}.`
-        : `With a ${P.budget} budget, this culvert doesn't make the cut. Judged on its own, it ranks ${P.rank} out of ${P.N} here${P.enter ? `, and it gets picked once the budget reaches ${P.enter}` : ""}.`,
+        ? `With a ${P.budget} budget, Pinchpoint picks ${P.n} culverts to fix ${P.where}, and this is one of them. Together they reopen ${mi(P.miles)} of creek and remove ${P.floodPct}% of the washout risk ${P.where}${P.delta > 0.05 ? `. That's ${mi(P.delta)} more than picking the best culverts one at a time` : ""}.`
+        : `With a ${P.budget} budget, this culvert doesn't make the cut. Judged on its own, it ranks ${P.rank} out of ${P.N} ${P.where}${P.enter ? `, and it gets picked once the budget reaches ${P.enter}` : ""}.`,
       facts: P.inPlan
         ? [["Budget", P.budget], ["Culverts picked", P.n], ["Creek reopened", `${P.miles.toFixed(1)} mi`], ["Washout risk removed", `${P.floodPct}%`]]
         : [["Budget", P.budget], ["Rank on its own", `${P.rank} of ${P.N}`], ["Gets picked at", P.enter || "over $20M"]],
@@ -337,7 +339,7 @@ export async function startFlyover(ctx) {
   $("#cine-stream").textContent = cap(stream);
   $("#cine-road").textContent = `${cap(road)}${rec.county ? `, ${rec.county} County` : ""}`;
   ui.bar.innerHTML = scenes.map((s, i) => `<button type="button" data-i="${i}" title="${s.title}"><i></i><span>${s.title}</span></button>`).join("");
-  ui.play.textContent = "Pause (space)";
+  ui.play.textContent = `Pause${KEY}`;
 
   let xsCtl = null;
   let xsMod = null;
@@ -386,7 +388,7 @@ export async function startFlyover(ctx) {
   // Play restarts the current scene from its beginning.
   function togglePause() {
     paused = !paused;
-    ui.play.textContent = paused ? "Play (space)" : "Pause (space)";
+    ui.play.textContent = paused ? `Play${KEY}` : `Pause${KEY}`;
     ui.root.classList.toggle("paused", paused);
     if (paused) {
       token++;
@@ -409,7 +411,7 @@ export async function startFlyover(ctx) {
   async function go(n) {
     if (n < 0) n = 0;
     if (n >= scenes.length) return finish();
-    if (paused) { paused = false; ui.play.textContent = "Pause (space)"; ui.root.classList.remove("paused"); }
+    if (paused) { paused = false; ui.play.textContent = `Pause${KEY}`; ui.root.classList.remove("paused"); }
     i = n;
     const my = ++token;
     sig.stopped = true;

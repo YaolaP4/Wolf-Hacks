@@ -4,3 +4,4 @@ __pycache__/
 data/raw/
 *.zip
 *.gdb/
+data/processed/streams/

@@ -27,6 +27,9 @@
 **1:50 Step 4, rivers vs. roads**
 > "Now plan for roads too. A plan built only for washout risk gives up a third of the river benefit. A plan leaning 70/30 toward roads keeps 91% of the river gain and 94% of the washout reduction. Road and fish agencies mostly want the same culverts. If they plan separately, they leave value on the table."
 
+**2:05 The action plan (the deliverable).** Click **Action plan**. Scroll the summary and the first project card: what to build, cost, miles, why it's in the plan, confidence and next steps. Mention **Print or save as PDF**. Then switch the watershed to **All of North Carolina** at $10M and open the plan again to show **Where the money goes**.
+> "This is what an agency takes away: a ranked list of projects, each with what to build, what it costs, what it buys, why it's on the list and how sure we are, for one watershed or the whole state."
+
 **2:20 Step 5, rigor**
 > "Everything is checked. The optimizer is exact and matches brute force on 300 random networks. The browser version matches Python. Our rebuilt river networks reproduce the inventory's mileage within 5% for 88% of 405 culverts. Statewide, network planning beats ranking by about 2%. The big wins are in the chained mountain watersheds, the ones Helene hit. The tool shows you which case you're in."
 

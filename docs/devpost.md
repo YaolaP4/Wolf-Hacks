@@ -25,15 +25,16 @@ There is money to do this: a $1B federal culvert program and billions in Helene 
 
 ## What it does
 
-Pinchpoint is a planning map for that decision.
+Pinchpoint decides which culverts to replace first, and hands back an action plan.
 
-1. **Pick a watershed** (33 in NC), **set a budget**, and **say what you're protecting**: rivers, roads, or a mix.
-2. An **exact optimizer** returns the best set of culverts to replace. It runs live in the browser and re-solves as you drag the sliders.
+1. **Pick the scope:** one of 33 NC watersheds, or **all of North Carolina** with a statewide budget. Then **set the budget** and **say what you're protecting**: rivers, roads, or a mix.
+2. An **exact optimizer** returns the best set of culverts to replace. It runs live in the browser (800 culverts statewide in about 60 ms) and re-solves as you drag the sliders.
 3. Next to it, Pinchpoint shows what you'd get by **ranking culverts one at a time**, which is how barriers are usually prioritized: miles of river reconnected, share of washout risk removed, number of culverts, and dollars.
 4. The map lights up the **river miles each plan reconnects**, drawn on stream networks we rebuilt from USGS high-resolution hydrography.
 5. Click any culvert for a **field sheet**: assessment, how badly it squeezes the stream, drainage area, river above and below, planning cost range, washout score, and a plain-language reason it was or wasn't chosen.
 6. **Stress-test costs** re-solves under 60 random cost scenarios and reports how often the plan still wins.
-7. **Fly to any culvert** for a narrated 3D flyover over satellite imagery and terrain. It covers why the crossing fails (an animated flood cross-section), the river it cuts off (traced upstream), what's below, the fix and its cost, and where it sits in the budget plan.
+7. **The action plan** is the deliverable. It lists projects in priority order, grouping culverts that only pay off together. Each project gets what to build (a creek-wide crossing about N ft wide, with coordinates), cost and likely range, river miles and washout risk it fixes, why it was chosen, confidence across 30 cost scenarios, and next steps (site visit, engineering estimate, road owner, wildlife biologists). Statewide it shows where the money goes by watershed. It prints to PDF and exports to CSV.
+8. **Fly to any project** for a narrated 3D flyover over satellite imagery and terrain. It covers why the crossing fails (an animated flood cross-section), the river it cuts off (traced upstream), what's below, the fix and its cost, and where it sits in the budget plan.
 
 ## What we found
 

@@ -1,9 +1,13 @@
 import { solve, evaluate, rankPlan, normalizers } from "./solver.js";
-import { startFlyover } from "./flyover.js";
+import { renderPlanView, closePlanView } from "./plan.js";
 
 const UNIT = 25_000; // dollars per solver cost unit
-const BUDGETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20];
-const MAX_UNITS = Math.round(20e6 / UNIT);
+// Budget steps in $M. One watershed and the whole state need different scales.
+const SHED_BUDGETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20];
+const STATE_BUDGETS = [1, 2, 3, 4, 5, 7.5, 10, 12.5, 15, 20, 25, 30, 40, 50, 60, 75, 100];
+const NC = "NC";
+const NC_BOUNDS = [[-84.35, 33.8], [-75.45, 36.6]];
+const MAX_UNITS = Math.round(100e6 / UNIT);
 const SHOWCASE = "06010105";
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -22,10 +26,19 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const money = (d) => (d >= 1e6 ? `$${(d / 1e6).toFixed(d >= 1e7 ? 1 : 2)}M` : `$${Math.round(d / 1e3)}k`);
 const mi = (x) => `${x.toFixed(1)} mi`;
 const pct = (x) => `${Math.round(x * 100)}%`;
-const budgetUsd = () => BUDGETS[state.bi] * 1e6;
+const budgets = () => (state.huc === NC ? STATE_BUDGETS : SHED_BUDGETS);
+const budgetUsd = () => budgets()[state.bi] * 1e6;
+const shedName = (huc) => (huc === NC ? "All of North Carolina" : DATA.sheds.find((x) => x.huc8 === huc)?.name || huc);
 const budgetUnits = () => Math.round(budgetUsd() / UNIT);
 const lamLabel = (l) => (l === 0 ? "Rivers only" : l === 1 ? "Roads only" : `${Math.round((1 - l) * 100)}% rivers, ${Math.round(l * 100)}% roads`);
-const streamName = (r) => r.river && r.river !== "Unknown" ? r.river : "Unnamed tributary";
+const invUrl = (id) => `https://tool.aquaticbarriers.org/report/combined_barriers/${id}`;
+// Inventory names like "Ut1 Davidson River" mean an unnamed tributary of that river.
+const streamName = (r) => {
+  const n = (r.river || "").trim();
+  if (!n || n === "Unknown" || /^ut\d*$/i.test(n)) return "Unnamed tributary";
+  const m = n.match(/^ut\d*\s+(?:to\s+)?(.+)$/i);
+  return m ? `Tributary of ${m[1]}` : n;
+};
 
 async function getJSON(path, optional = false) {
   const res = await fetch(path);
@@ -39,13 +52,13 @@ async function getJSON(path, optional = false) {
 /* ---------- model ---------- */
 function shed(huc) {
   if (sheds.has(huc)) return sheds.get(huc);
-  const recs = DATA.culverts.filter((d) => d.huc8 === huc);
+  const recs = huc === NC ? DATA.culverts : DATA.culverts.filter((d) => d.huc8 === huc);
   const items = recs.map((r) => ({ id: r.id, parent: r.parent, habitat: r.up, flood: r.flood, cost: Math.max(1, Math.round(r.cost / UNIT)), anchor: r.parent ? null : r.anchorMiles, rec: r }));
   const byId = new Map(items.map((d) => [d.id, d]));
   const children = new Map(items.map((d) => [d.id, []]));
   for (const d of items) if (d.parent && children.has(d.parent)) children.get(d.parent).push(d.id);
   const { H, F } = normalizers(items);
-  const s = { huc, recs, items, byId, children, H, F, meta: DATA.sheds.find((x) => x.huc8 === huc) };
+  const s = { huc, recs, items, byId, children, H, F, meta: huc === NC ? { huc8: NC, name: shedName(NC), n: DATA.culverts.length } : DATA.sheds.find((x) => x.huc8 === huc) };
   sheds.set(huc, s);
   return s;
 }
@@ -80,7 +93,7 @@ function renderPanel(r) {
   const { s, plan, base } = r;
   $("#budget-out").textContent = money(budgetUsd());
   $("#lam-out").textContent = lamLabel(state.lam);
-  $("#budget").style.setProperty("--fill", `${(state.bi / (BUDGETS.length - 1)) * 100}%`);
+  $("#budget").style.setProperty("--fill", `${(state.bi / (budgets().length - 1)) * 100}%`);
   $("#r-miles-p").textContent = mi(plan.miles);
   $("#r-miles-b").textContent = mi(base.miles);
   $("#r-flood-p").textContent = pct(plan.flood / s.F);
@@ -108,14 +121,17 @@ function renderPanel(r) {
   const st = state.stress;
   $("#stress-out").textContent = st && st.key === stressKey() ? st.summary : "Re-solve with 60 random cost scenarios.";
   document.body.classList.toggle("hide-base", !state.showBase);
+  const lg = document.querySelector(".lg-shade-text");
+  if (lg) lg.textContent = state.huc === NC ? "Watersheds: share of the statewide budget they get" : "Other watersheds: how much network planning adds at this budget";
 }
 
 function renderCurve(r) {
   const { s, sol } = r;
   const svg = $("#curve");
   const W = 360, Hh = 150, L = 34, R = 92, T = 10, B = 22;
-  const xmaxM = BUDGETS[state.bi] <= 6 ? 10 : 20;
-  const steps = BUDGETS.filter((b) => b <= xmaxM);
+  const cur = budgets()[state.bi];
+  const xmaxM = state.huc === NC ? (cur <= 30 ? 50 : 100) : (cur <= 6 ? 10 : 20);
+  const steps = budgets().filter((b) => b <= xmaxM);
   const pts = steps.map((b) => {
     const u = Math.round((b * 1e6) / UNIT);
     return {
@@ -130,7 +146,6 @@ function renderCurve(r) {
   const y = (m) => T + (Hh - T - B) * (1 - m / ymax);
   const line = (k) => pts.map((d, i) => `${i ? "L" : "M"}${x(d.b).toFixed(1)},${y(d[k]).toFixed(1)}`).join("");
   const gap = `${line("p")}${[...pts].reverse().map((d) => `L${x(d.b).toFixed(1)},${y(d.q).toFixed(1)}`).join("")}Z`;
-  const cur = BUDGETS[state.bi];
   const curP = r.plan.miles, curQ = r.base.miles;
   const last = pts[pts.length - 1];
   const yt = [0, ymax / 2, ymax / 1.08].map((m) => Math.round(m));
@@ -245,6 +260,7 @@ function demConfig() {
 }
 
 function bboxOf(huc) {
+  if (huc === NC) return NC_BOUNDS;
   const m = DATA.sheds.find((x) => x.huc8 === huc);
   const b = m.view || m.bbox;
   return [[b[0], b[1]], [b[2], b[3]]];
@@ -253,9 +269,11 @@ function bboxOf(huc) {
 // Watershed shading: how much network-aware planning adds over ranking at the current budget.
 const gainKey = () => `g${state.bi}`;
 function hucFillColor() {
+  if (state.huc === NC) return ["interpolate", ["linear"], ["coalesce", ["get", "alloc"], 0], 0, "#7b878a", 0.001, "#b9d6ea", 0.3, "#5aa3d6", 1, "#1c6aa8"];
   return ["interpolate", ["linear"], ["coalesce", ["get", gainKey()], 0], 0, "#7b878a", 0.02, "#b9d6ea", 0.15, "#5aa3d6", 0.5, "#1c6aa8"];
 }
 function hucFillOpacity() {
+  if (state.huc === NC) return ["interpolate", ["linear"], ["coalesce", ["get", "alloc"], 0], 0, 0.05, 0.001, 0.25, 1, 0.55];
   return ["case", ["==", ["get", "huc8"], state.huc], 0, ["interpolate", ["linear"], ["coalesce", ["get", gainKey()], 0], 0, 0.06, 0.02, 0.2, 0.5, 0.45]];
 }
 function decorateHucs() {
@@ -288,6 +306,7 @@ function addDataLayers() {
   map.addSource("flow", { type: "geojson", data: empty });
   map.addLayer({ id: "streams-flow", type: "line", source: "flow", paint: { "line-color": "#e9f6ff", "line-width": w(0.9), "line-dasharray": [0, 4, 3] } }, before);
   map.addLayer({ id: "links", type: "line", source: "links", paint: { "line-color": ["case", ["get", "open"], "#1c7fc1", "#8e948d"], "line-width": ["case", ["get", "open"], 2.4, 1], "line-dasharray": [2, 1.5] } }, before);
+  map.addLayer({ id: "plan-pulse", type: "circle", source: "culverts", filter: ["in", ["get", "s"], ["literal", ["plan", "both"]]], paint: { "circle-radius": 8, "circle-color": "#5fb3e4", "circle-opacity": 0, "circle-stroke-color": "#1c7fc1", "circle-stroke-width": 2.5, "circle-stroke-opacity": 0 } });
   map.addLayer({
     id: "culverts", type: "circle", source: "culverts",
     paint: {
@@ -309,6 +328,12 @@ function addDataLayers() {
     const h = e.features[0].properties.huc8;
     const m = DATA.sheds.find((x) => x.huc8 === h);
     if (!m) return;
+    if (state.huc === NC) {
+      const a = DATA.ncAlloc?.get(h);
+      const what = a ? `${a.n} ${a.n === 1 ? "culvert" : "culverts"} in the statewide plan: ${money(a.cost)}, ${a.miles.toFixed(1)} river miles reconnected.` : "No culverts here make the statewide plan at this budget.";
+      tip.setLngLat(e.lngLat).setHTML(`<b>${esc(m.name)}</b>, ${m.n} assessed culverts<br>${what}<br><span class="tip-hint">Click to open this watershed's plan</span>`).addTo(map);
+      return;
+    }
     const o = m.opt[state.bi], q = m.rank[state.bi];
     const g = q > 0 ? Math.round(((o - q) / q) * 100) : 0;
     const what = o - q > 0.05 ? `Network planning adds ${(o - q).toFixed(1)} river miles at ${money(budgetUsd())} (${q.toFixed(1)} → ${o.toFixed(1)}${q > 0 ? `, +${g}%` : ""}).` : `At ${money(budgetUsd())}, ranking one at a time does as well here (${o.toFixed(1)} mi).`;
@@ -321,6 +346,23 @@ function addDataLayers() {
     if (h !== state.huc) setState({ huc: h }, { fit: true });
   });
   animateFlow();
+  animatePulse();
+}
+
+// A gentle pulse on the culverts the plan picks. Only constant or zoom-based paint values change,
+// so MapLibre redraws without re-tiling any source.
+function animatePulse() {
+  if (reduceMotion) { map.setPaintProperty("plan-pulse", "circle-stroke-opacity", 0.55); return; }
+  const t0 = performance.now();
+  setInterval(() => {
+    if (!map.getLayer("plan-pulse") || document.hidden) return;
+    const t = ((performance.now() - t0) / 1800) % 1;
+    const e = 1 - (1 - t) ** 2;
+    map.setPaintProperty("plan-pulse", "circle-radius", ["interpolate", ["linear"], ["zoom"], 8, 5 + 9 * e, 13, 10 + 16 * e]);
+    map.setPaintProperty("plan-pulse", "circle-stroke-opacity", 0.9 * (1 - t));
+    map.setPaintProperty("plan-pulse", "circle-opacity", 0.22 * (1 - t));
+    map.setPaintProperty("plan-pulse", "circle-stroke-color", document.body.classList.contains("cinema") ? "#ffffff" : "#1c7fc1");
+  }, 60);
 }
 
 function animateFlow() {
@@ -335,6 +377,18 @@ function animateFlow() {
   }, 90);
 }
 
+// Streams ship in a compact form (pipeline/compact_streams.py): integer coordinate offsets.
+function decodeStreams(z) {
+  const k = z.scale;
+  const features = z.f.map((a) => {
+    let x = a[2], y = a[3];
+    const coordinates = [[x / k, y / k]];
+    for (let i = 4; i < a.length; i += 2) { x += a[i]; y += a[i + 1]; coordinates.push([x / k, y / k]); }
+    return { type: "Feature", geometry: { type: "LineString", coordinates }, properties: { net: z.nets[a[0]], o: a[1] } };
+  });
+  return { type: "FeatureCollection", features };
+}
+
 function loadStreams(huc) {
   if (streamsLoaded === huc) return DATA.streamsReady;
   streamsLoaded = huc;
@@ -344,7 +398,8 @@ function loadStreams(huc) {
 }
 async function loadStreamsNow(huc) {
   const has = DATA.streamManifest?.hucs?.includes(huc);
-  const gj = has ? await getJSON(`./data/streams/streams_${huc}.geojson`, true) : null;
+  const z = has ? await getJSON(`./data/streams/streams_${huc}.json`, true) : null;
+  const gj = z ? decodeStreams(z) : null;
   if (streamsLoaded !== huc) return;
   map.getSource("streams").setData(gj || { type: "FeatureCollection", features: [] });
   DATA.hasStreams = !!gj;
@@ -371,6 +426,20 @@ function renderMap(r) {
   map.getSource("flow").setData({ type: "FeatureCollection", features: flowFeats });
   map.setFilter("streams-baseonly", ["in", ["get", "net"], ["literal", baseOnly]]);
   map.setFilter("huc-sel", ["==", ["get", "huc8"], state.huc]);
+  if (state.huc === NC) {
+    const alloc = new Map();
+    for (const id of r.planIds) {
+      const d = s.byId.get(id).rec;
+      const a = alloc.get(d.huc8) || { n: 0, cost: 0, miles: 0 };
+      a.n++; a.cost += d.cost;
+      alloc.set(d.huc8, a);
+    }
+    for (const [root, m] of plan.treeMiles) { const a = alloc.get(s.byId.get(root).rec.huc8); if (a) a.miles += m; }
+    DATA.ncAlloc = alloc;
+    const top = Math.max(1, ...[...alloc.values()].map((a) => a.cost));
+    for (const f of DATA.hucGeo.features) f.properties.alloc = (alloc.get(f.properties.huc8)?.cost || 0) / top;
+    map.getSource("huc").setData(DATA.hucGeo);
+  }
   map.setPaintProperty("huc-fill", "fill-color", hucFillColor());
   map.setPaintProperty("huc-fill", "fill-opacity", hucFillOpacity());
   const links = DATA.hasStreams ? [] : s.recs.filter((d) => d.parent && s.byId.has(d.parent)).map((d) => {
@@ -425,7 +494,7 @@ function sheetHTML(r, id) {
       <dt>Planning cost</dt><dd>${money(rec.cost)} <span style="color:var(--muted);font-weight:400">(${money(rec.cost * 0.44)}–${money(rec.cost * 2.28)})</span></dd>
     </dl>
     <div class="sheet-fly"><button type="button" class="btn btn-primary fly-btn" data-fly="${esc(id)}">Fly to this culvert</button></div>
-    <div class="sheet-foot"><span class="sheet-formula">Washout risk = squeeze ${fc.toFixed(2)} × flow ${fl.toFixed(2)} × road ${fq.toFixed(2)}</span>${rec.url ? `<a href="${esc(rec.url)}" target="_blank" rel="noopener">Open the inventory record</a>` : ""}</div>
+    <div class="sheet-foot"><span class="sheet-formula">Washout risk = squeeze ${fc.toFixed(2)} × flow ${fl.toFixed(2)} × road ${fq.toFixed(2)}</span><a href="${invUrl(rec.id)}" target="_blank" rel="noopener">Open the inventory record</a></div>
   </div>`;
 }
 
@@ -460,7 +529,7 @@ function runStress() {
   btn.disabled = true;
   const step = () => {
     if (stressKey() !== key) { btn.disabled = false; return; }
-    for (let j = 0; j < 4 && done < N; j++, done++) {
+    for (let j = 0; j < (state.huc === NC ? 1 : 4) && done < N; j++, done++) {
       const items = s.items.map((d) => ({ ...d, cost: Math.max(1, Math.round((d.rec.cost * Math.exp(0.5 * gauss())) / UNIT)) }));
       const p = evaluate(items, solve(items, units, state.lam).plan(units));
       const b = evaluate(items, rankPlan(items, units, soloScore(s, state.lam)));
@@ -486,29 +555,59 @@ function runStress() {
 function exportPlan() {
   const r = compute();
   const { s, planIds, plan, baseSet } = r;
-  const cols = ["order", "inventory_id", "stream", "road", "road_type", "county", "lat", "lon", "field_assessment", "constriction",
+  const cols = ["order", "inventory_id", "stream", "road", "road_type", "road_owner", "county", "watershed", "lat", "lon", "field_assessment", "constriction",
     "drainage_sq_mi", "river_above_mi", "river_below_mi", "reconnects_to_river_below", "in_one_at_a_time_plan", "planning_cost_usd",
     "cost_low_usd", "cost_high_usd", "washout_score", "inventory_url"];
   const q = (v) => (v == null ? "" : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
   const rows = planIds.map((id, i) => {
     const d = s.byId.get(id).rec;
-    return [i + 1, d.id, streamName(d), d.road || "", d.roadType || "", d.county || "", d.lat, d.lon, d.severity, d.constriction || "",
+    return [i + 1, d.id, streamName(d), d.road || "", d.roadType || "", d.owner || "", d.county || "", shedName(d.huc8), d.lat, d.lon, d.severity, d.constriction || "",
       d.daSqKm != null ? (d.daSqKm / 2.59).toFixed(3) : "", d.up, d.down, plan.open.has(id) ? "yes" : "no", baseSet.has(id) ? "yes" : "no",
-      d.cost, Math.round(d.cost * 0.44), Math.round(d.cost * 2.28), d.flood, d.url || ""].map(q).join(",");
+      d.cost, Math.round(d.cost * 0.44), Math.round(d.cost * 2.28), d.flood, invUrl(d.id)].map(q).join(",");
   });
-  const meta = `# Pinchpoint plan: ${s.meta.name} (HUC8 ${s.huc}), budget ${money(budgetUsd())}, ${lamLabel(state.lam)}. River reconnected ${plan.miles.toFixed(1)} mi; washout risk removed ${pct(plan.flood / s.F)}. Planning-level costs; see README.`;
+  const meta = `# Pinchpoint plan: ${s.meta.name} (${s.huc === NC ? "statewide" : `HUC8 ${s.huc}`}), budget ${money(budgetUsd())}, ${lamLabel(state.lam)}. River reconnected ${plan.miles.toFixed(1)} mi; washout risk removed ${pct(plan.flood / s.F)}. Planning-level costs; see README.`;
   const blob = new Blob([[meta, cols.join(","), ...rows].join("\n")], { type: "text/csv" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `pinchpoint_${s.meta.name.replace(/\W+/g, "_").toLowerCase()}_${BUDGETS[state.bi]}M.csv`;
+  a.download = `pinchpoint_${s.meta.name.replace(/\W+/g, "_").toLowerCase()}_${budgets()[state.bi]}M.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+/* ---------- action plan ---------- */
+function hucBounds(huc) {
+  const f = DATA.hucGeo.features.find((x) => x.properties.huc8 === huc);
+  if (!f) return bboxOf(huc);
+  const rings = f.geometry.type === "Polygon" ? [f.geometry.coordinates[0]] : f.geometry.coordinates.map((q) => q[0]);
+  const xs = rings.flat().map((c) => c[0]), ys = rings.flat().map((c) => c[1]);
+  return [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]];
+}
+function openPlanView() {
+  showTour(-1);
+  if (popup) popup.remove();
+  const r = compute();
+  const isNC = state.huc === NC;
+  renderPlanView({
+    r, lam: state.lam, money, streamName, invUrl, shedName, soloScore,
+    scopeName: isNC ? "all of North Carolina" : `${r.s.meta.name} watershed`, isNC,
+    budget: money(budgetUsd()), lamText: lamLabel(state.lam).toLowerCase(), F: r.s.F,
+    hucGeo: DATA.hucGeo, bounds: isNC ? NC_BOUNDS : hucBounds(state.huc), focusHuc: isNC ? null : state.huc,
+    exportCsv: exportPlan, flyover: (id) => flyover(id), show: (id) => selectCulvert(id, true),
+  });
 }
 
 /* ---------- state ---------- */
 function setState(patch, opts = {}) {
   const hucChanged = patch.huc && patch.huc !== state.huc;
+  const scaleChanged = hucChanged && (patch.huc === NC) !== (state.huc === NC);
+  const before = budgetUsd();
   Object.assign(state, patch);
+  if (scaleChanged && !("bi" in patch)) {
+    const list = budgets();
+    state.bi = list.reduce((best, b, i) => (Math.abs(b * 1e6 - before) < Math.abs(list[best] * 1e6 - before) ? i : best), 0);
+  }
+  state.bi = Math.min(state.bi, budgets().length - 1);
+  $("#budget").max = budgets().length - 1;
   if (hucChanged) { state.selected = null; if (popup) popup.remove(); }
   $("#shed").value = state.huc;
   $("#budget").value = state.bi;
@@ -519,7 +618,7 @@ function setState(patch, opts = {}) {
   renderMap(r);
   if (hucChanged && map) loadStreams(state.huc);
   if (opts.fit && map) map.fitBounds(bboxOf(state.huc), { padding: 40, duration: reduceMotion ? 0 : 900 });
-  history.replaceState(null, "", `#huc=${state.huc}&b=${BUDGETS[state.bi]}&p=${state.lam}`);
+  history.replaceState(null, "", `#huc=${state.huc}&b=${budgets()[state.bi]}&p=${state.lam}`);
   return r;
 }
 
@@ -552,13 +651,14 @@ function mark(at) {
 
 async function flyover(id) {
   if (popup) popup.remove();
-  // The flyover traces and highlights rivers, so wait for this watershed's stream data.
-  await (loadStreams(state.huc) || Promise.resolve());
-  showTour(-1);
+  closePlanView();
   const r = compute();
   const { s, plan, base, planSet } = r;
   const d = s.byId.get(id);
   if (!d) return;
+  // Load the flyover code on first use, and the rivers of this culvert's watershed.
+  const [{ startFlyover }] = await Promise.all([import("./flyover.js"), loadStreams(d.rec.huc8) || Promise.resolve()]);
+  showTour(-1);
   // chain: this culvert plus every candidate culvert between it and its anchor
   const chain = [id];
   let x = d.parent;
@@ -567,24 +667,25 @@ async function flyover(id) {
   const order = [...s.items].sort((a, b) => soloScore(s, state.lam)(b) - soloScore(s, state.lam)(a));
   const sol = solution(s, state.lam);
   let enter = null;
-  for (let bi = state.bi + 1; bi < BUDGETS.length && !enter; bi++) {
-    if (sol.plan(Math.round((BUDGETS[bi] * 1e6) / UNIT)).includes(id)) enter = money(BUDGETS[bi] * 1e6);
+  const list = budgets();
+  for (let bi = state.bi + 1; bi < list.length && !enter; bi++) {
+    if (sol.plan(Math.round((list[bi] * 1e6) / UNIT)).includes(id)) enter = money(list[bi] * 1e6);
   }
-  const pts = s.recs.filter((q) => plan.open.has(q.id) || q.id === id);
+  const pts = s.recs.filter((q) => (plan.open.has(q.id) || q.id === id) && (state.huc !== NC || q.huc8 === d.rec.huc8));
   const lons = pts.map((q) => q.lon), lats = pts.map((q) => q.lat);
   startFlyover({
-    map, rec: d.rec, streams: DATA.streamsGeo, shedName: s.meta.name, money,
+    map, rec: d.rec, streams: DATA.streamsGeo, shedName: shedName(d.rec.huc8), money,
     colors: { trace: "#7fe3ff", traceGlow: "#2fb6ff", xs: { water: "#3b9ee6", waterDeep: "#1c6fb3", ink: "#1e292d", muted: "#6e7a77", road: "#4a4f55", soil: "#8a7358", accent: "#d9442b", paper: "#f2f4ef" } },
     plan: {
       inPlan: planSet.has(id), n: plan.n, miles: plan.miles, floodPct: Math.round((plan.flood / s.F) * 100), delta: plan.miles - base.miles,
-      budget: money(budgetUsd()), lam: lamLabel(state.lam).toLowerCase(), rank: order.findIndex((q) => q.id === id) + 1, N: s.items.length, enter,
+      budget: money(budgetUsd()), lam: lamLabel(state.lam).toLowerCase(), where: state.huc === NC ? "across North Carolina" : "in this watershed", rank: order.findIndex((q) => q.id === id) + 1, N: s.items.length, enter,
       parent: d.parent && s.byId.has(d.parent) ? s.byId.get(d.parent).rec : null,
       upstream: (s.children.get(id) || []).map((c) => s.byId.get(c).rec),
       chainCount: chain.length - 1, chainMiles: chainEval.miles, chainCost: chain.reduce((t, c) => t + s.byId.get(c).rec.cost, 0),
     },
     planBounds: () => ({ bounds: [[Math.min(...lons) - 0.02, Math.min(...lats) - 0.02], [Math.max(...lons) + 0.02, Math.max(...lats) + 0.02]] }),
     pulse, mark,
-    onExit: () => renderMap(compute()),
+    onExit: () => { loadStreams(state.huc); renderMap(compute()); },
   });
 }
 
@@ -604,7 +705,7 @@ function keystone(r) {
 
 function milesAt(huc, lam, bi) {
   const s = shed(huc);
-  const u = Math.round((BUDGETS[bi] * 1e6) / UNIT);
+  const u = Math.round((SHED_BUDGETS[bi] * 1e6) / UNIT);
   return evaluate(s.items, solution(s, lam).plan(u));
 }
 
@@ -641,6 +742,10 @@ const TOUR = [
       return `Now plan for roads too. Back in the Upper French Broad with $5M, a plan for washout risk alone reconnects ${roads.miles.toFixed(0)} river miles instead of ${rivers.miles.toFixed(0)}. Weighted 70/30 toward roads, the plan keeps ${Math.round((mix.miles / rivers.miles) * 100)}% of the river gain and ${Math.round((mix.flood / roads.flood) * 100)}% of the washout reduction.`;
     },
     run: () => { if (popup) popup.remove(); setState({ huc: SHOWCASE, bi: 13, lam: 0.7, showBase: true }, { fit: true }); },
+  },
+  {
+    target: "#open-plan",
+    text: () => "This is the output: an action plan. It lists each project in priority order with what to build, what it costs, what it buys, why it was picked, how sure we are, and the next steps. Print it or save it as a PDF. Pick \"All of North Carolina\" to plan a statewide budget.",
   },
   {
     target: "#open-methods-2",
@@ -736,16 +841,19 @@ async function boot() {
 
   const hash = new URLSearchParams(location.hash.slice(1));
   if (hash.get("huc") && shedsMeta.some((x) => x.huc8 === hash.get("huc"))) state.huc = hash.get("huc");
-  if (hash.get("b")) { const i = BUDGETS.indexOf(Number(hash.get("b"))); if (i >= 0) state.bi = i; }
+  if (hash.get("huc") === NC) state.huc = NC;
+  if (hash.get("b")) { const i = budgets().indexOf(Number(hash.get("b"))); if (i >= 0) state.bi = i; }
   if (hash.get("p")) state.lam = Math.min(1, Math.max(0, Math.round(Number(hash.get("p")) * 10) / 10));
 
-  $("#shed").innerHTML = shedsMeta.map((x) => `<option value="${x.huc8}">${esc(x.name)} (${x.n} culverts)</option>`).join("");
+  $("#shed").innerHTML = `<option value="${NC}">All of North Carolina (${culverts.length} culverts)</option>` + shedsMeta.map((x) => `<option value="${x.huc8}">${esc(x.name)} (${x.n} culverts)</option>`).join("");
   $("#shed").addEventListener("change", (e) => setState({ huc: e.target.value }, { fit: true }));
   $("#budget").addEventListener("input", (e) => setState({ bi: Number(e.target.value) }));
   $("#lam").addEventListener("input", (e) => setState({ lam: Number(e.target.value) / 10 }));
   $("#show-base").addEventListener("change", (e) => setState({ showBase: e.target.checked }));
   $("#stress").addEventListener("click", runStress);
   $("#export").addEventListener("click", exportPlan);
+  $("#open-plan").addEventListener("click", openPlanView);
+  $("#open-plan-2").addEventListener("click", openPlanView);
   const openMethods = () => { $("#methods-body").innerHTML = methodsHTML(); $("#methods").showModal(); };
   $("#open-methods").addEventListener("click", openMethods);
   $("#open-methods-2").addEventListener("click", openMethods);
@@ -761,13 +869,18 @@ async function boot() {
   $("#tour-next").addEventListener("click", () => showTour(tourAt + 1 < TOUR.length ? tourAt + 1 : -1));
   $("#tour-back").addEventListener("click", () => showTour(tourAt - 1));
   $("#tour-close").addEventListener("click", () => showTour(-1));
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && tourAt >= 0) showTour(-1); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (!$("#action").hidden) closePlanView();
+    else if (tourAt >= 0) showTour(-1);
+  });
   if (location.hash) $("#intro").hidden = true;
 
   setState({});
   map = new maplibregl.Map({
     container: "map", style: buildStyle(demConfig()), bounds: bboxOf(state.huc),
     fitBoundsOptions: { padding: 40 }, dragRotate: false, pitchWithRotate: false, attributionControl: { compact: true },
+    pixelRatio: Math.min(window.devicePixelRatio || 1, 2), // 3x phone screens cost a lot of GPU for no visible gain
   });
   window.pinchpoint = { map, state, compute, select: (id) => selectCulvert(id, true), flyover: (id) => flyover(id) };
   map.on("error", (e) => console.warn("map error:", e.error?.message || e));

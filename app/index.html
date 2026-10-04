@@ -7,7 +7,10 @@
   <meta name="description" content="Choose which road-stream culverts to replace under a budget so North Carolina's rivers reconnect and its roads survive the next flood." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
+  <link rel="preconnect" href="https://elevation-tiles-prod.s3.amazonaws.com" crossorigin />
+  <link rel="preconnect" href="https://unpkg.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..100,400..800&family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,400..500&display=swap" rel="stylesheet" />
   <link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
   <link href="./styles.css" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M2 20c6-8 10 4 14-4s8 4 14-4' fill='none' stroke='%231C7FC1' stroke-width='3' stroke-linecap='round'/%3E%3Crect x='13' y='6' width='6' height='20' rx='1' fill='%239A6B43'/%3E%3C/svg%3E" />
@@ -58,6 +61,7 @@
           </tbody>
         </table>
         <p class="verdict" id="verdict"></p>
+        <button type="button" id="open-plan" class="btn btn-primary btn-wide">Open the action plan</button>
         <figure class="curve">
           <svg id="curve" role="img" aria-labelledby="curve-title" viewBox="0 0 360 150"></svg>
           <figcaption id="curve-title">River miles reconnected as the budget grows. The shaded gap is what one-at-a-time ranking leaves behind.</figcaption>
@@ -70,7 +74,7 @@
       </section>
 
       <section class="plan" aria-label="Culverts in the plan">
-        <div class="plan-head"><h2 class="section-title">The plan</h2><button type="button" id="export" class="btn-quiet">Download plan (CSV)</button></div>
+        <div class="plan-head"><h2 class="section-title">Recommended projects</h2><button type="button" id="export" class="btn-quiet">Download plan (CSV)</button></div>
         <ol id="plan-list" class="plan-list"></ol>
       </section>
 
@@ -83,7 +87,8 @@
     <main class="map-wrap">
       <div id="map" role="application" aria-label="Map of culverts and streams"></div>
       <div class="map-tools">
-        <button type="button" id="start-fly" class="btn btn-primary">Flyover</button>
+        <button type="button" id="open-plan-2" class="btn btn-primary">Action plan</button>
+        <button type="button" id="start-fly" class="btn">Flyover</button>
         <button type="button" id="start-tour" class="btn">Tour</button>
         <button type="button" id="open-methods-2" class="btn">Methods</button>
       </div>
@@ -93,7 +98,7 @@
         <div class="lg"><span class="sw sw-none"></span>Assessed barrier, not replaced</div>
         <div class="lg"><span class="ln ln-open"></span>River reconnected</div>
         <div class="lg lg-base"><span class="ln ln-base"></span>Reconnected only by ranking</div>
-        <div class="lg lg-shade"><span class="ramp"></span>Other watersheds: how much network planning adds at this budget</div>
+        <div class="lg lg-shade"><span class="ramp"></span><span class="lg-shade-text">Other watersheds: how much network planning adds at this budget</span></div>
       </div>
     </main>
   </div>
@@ -148,6 +153,8 @@
       </div>
     </div>
   </div>
+
+  <div class="action" id="action" role="dialog" aria-modal="true" aria-label="Action plan" hidden></div>
 
   <dialog class="methods" id="methods" aria-labelledby="methods-title">
     <div class="methods-body" id="methods-body"></div>

@@ -21,10 +21,13 @@ from shapely.geometry import LineString, MultiLineString, Point, mapping
 from shapely.ops import linemerge, substring
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 HUC8 = sys.argv[1] if len(sys.argv) > 1 else "06010105"
 GDB = next((ROOT / "data" / "raw").glob(f"nhdplushr_{HUC8[:4]}/*.gdb"))
 OUT = ROOT / "app" / "data" / "streams"
 OUT.mkdir(parents=True, exist_ok=True)
+FULL = ROOT / "data" / "processed" / "streams"  # full GeoJSON, not shipped with the app
+FULL.mkdir(parents=True, exist_ok=True)
 KM_TO_MI = 0.621371
 
 
@@ -123,7 +126,7 @@ def main() -> None:
         coords = np.round(np.asarray(part.coords), 5).tolist()
         feats.append({"type": "Feature", "geometry": {"type": "LineString", "coordinates": coords},
                       "properties": {"net": r.net, "o": r.o}})
-    path = OUT / f"streams_{HUC8}.geojson"
+    path = FULL / f"streams_{HUC8}.geojson"
     path.write_text(json.dumps({"type": "FeatureCollection", "features": feats}, separators=(",", ":")))
     man_path = OUT / "manifest.json"
     man = json.loads(man_path.read_text()) if man_path.exists() else {"hucs": []}
@@ -131,6 +134,8 @@ def main() -> None:
         man["hucs"].append(HUC8)
     man_path.write_text(json.dumps(man))
     print(f"wrote {len(feats)} stream segments ({path.stat().st_size / 1e6:.1f} MB)")
+    from compact_streams import compact
+    compact(path)
 
 
 if __name__ == "__main__":

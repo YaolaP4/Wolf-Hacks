@@ -19,16 +19,28 @@ Today that choice is usually made one culvert at a time: score each crossing on 
 
 ## What Pinchpoint does
 
-Pick a watershed, set a budget, and say how much you care about rivers vs. roads. Pinchpoint returns the best set of culverts to replace, and compares it live with one-at-a-time ranking:
+Pinchpoint answers one question: **with this much money, which culverts should we replace first?**
 
-- **Map:** culverts it would replace, the ones ranking would replace, and the river miles each plan reconnects. The river lines are networks we rebuilt from USGS NHDPlus HR flowlines.
-- **Budget curve:** river miles reconnected as the budget grows, for both approaches. The shaded gap is what ranking leaves behind.
-- **Field sheet per culvert:** assessment, constriction, drainage area, river above and below, planning cost, washout score, and why it was or wasn't chosen.
-- **Flyover for any culvert:** a narrated, seven-scene 3D tour over USGS satellite imagery and terrain. It shows where the culvert is and how close Helene's landslides came; the crossing and its field rating; an animated flood cross-section (undersized pipe vs. stream-width crossing in the same storm); the river it cuts off, traced upstream; what lies below; the fix and its cost; and where it sits in the budget plan. Every sentence is built from the culvert's inventory record and the live plan.
-- **Statewide shading:** every watershed is shaded by how much network planning adds at the current budget. Hover to see the numbers, click to open it. This answers "where to act" at two scales: which watershed, then which culverts.
-- **Stress test:** re-solves under 60 random cost scenarios and reports how often the plan still wins and which picks are robust.
-- **Download plan (CSV):** the selected culverts with coordinates, roads, costs and inventory links, ready for a field crew.
-- **Guided tour** for the 3-minute version.
+1. **Set the scope:** one of 33 NC watersheds, or **all of North Carolina** with a statewide budget (up to $100M).
+2. **Set the budget** and **what you're protecting**: rivers, roads, or a mix.
+3. **An exact optimizer returns the plan:** the best set of culverts to replace. It re-solves live in the browser as you drag the sliders; the statewide problem (800 culverts) solves in about 60 ms.
+4. **The action plan** turns that into a document an agency can act on. Projects come in priority order, and culverts that only pay off together are grouped as one project. For each project it gives:
+   - **What to build:** replace the pipe with a creek-wide crossing about N ft wide, with exact coordinates.
+   - **Cost:** a planning estimate with a likely range.
+   - **What it buys:** river miles reconnected, brook trout habitat, and washout risk removed.
+   - **Why it's in the plan:** for example, "these two culverts only pay off together; ranking one at a time picks neither".
+   - **Confidence:** how often the project stayed in the plan across 30 random cost scenarios.
+   - **Next steps:** a site visit, an engineering estimate, the road owner to coordinate with, and wildlife biologists if trout are present.
+
+   Statewide, it also shows **where the money goes** by watershed. Print it, save it as a PDF, or download it as a CSV.
+
+To check and explain the plan:
+
+- **Map:** the culverts the plan replaces (pulsing), the ones one-at-a-time ranking would replace, and the river each plan reconnects, drawn on stream networks rebuilt from USGS NHDPlus HR. Statewide, each watershed is shaded by its share of the budget.
+- **Comparison with how it's done today:** the same budget spent by ranking culverts one at a time, side by side, with a budget curve.
+- **Flyover for any project:** a narrated, seven-scene 3D tour over USGS satellite imagery. It covers the crossing, an animated flood cross-section of the pipe vs. the fix, the river it blocks traced upstream, the barrier below highlighted, the fix and its cost, and where it sits in the plan.
+- **Stress test** under random costs, a **field sheet** per culvert, and a **guided tour**.
+- **Light on bandwidth:** river networks ship in a compact encoding (Asheville area 9.2 MB to 1.5 MB, 0.5 MB gzipped, same geometry). The flyover code loads only when used, and the map caps rendering resolution on high-density phone screens. It works the same on phones.
 
 ## What we found
 
@@ -51,8 +63,9 @@ pipeline/build_forest.py                               pipeline/build_streams.py
 pipeline/optimizer.py  ◄── exact optimizer ──►  app/solver.js (same algorithm, in the browser)
           │
 pipeline/analyze.py: statewide comparison, cost Monte Carlo, rivers-vs-roads frontier
+pipeline/compact_streams.py: river networks in a compact integer-offset encoding
           │
-app/: MapLibre GL + hillshade + contours, live optimization, plain HTML/CSS/JS
+app/: MapLibre GL, live optimization, action plan (app/plan.js), flyover (app/flyover.js)
 ```
 
 **Objective.** The inventory scores one culvert by its gain, `min(upstream miles, downstream miles)`. We use the same rule for bundles. A chain of culverts hangs from an *anchor*: the river below the lowest culvert, bounded by a dam, a waterfall or the outlet. A plan reconnects the miles above every culvert whose path down to the anchor is fully open, capped at the anchor's length. For one culvert this is exactly the inventory's gain. The flood term is a screening index (constriction × drainage size × road type), additive per culvert. A slider weights the two.

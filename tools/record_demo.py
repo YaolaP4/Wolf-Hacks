@@ -26,12 +26,31 @@ with sync_playwright() as p:
     page.wait_for_function("window.pinchpoint && window.pinchpoint.map")
     page.wait_for_timeout(7000)  # intro card
     page.click("#intro-tour")
-    holds = [6000, 7000, 9000, 9000, 6000]
+    holds = [6000, 7000, 9000, 9000, 7000, 5000]
     for i, hold in enumerate(holds):
         page.wait_for_timeout(hold)
         if i < len(holds) - 1:
             page.click("#tour-next")
     page.click("#tour-close")
+    # the deliverable: the action plan, scrolled through, then the statewide version
+    page.evaluate("document.querySelector('#budget').value = 7; document.querySelector('#budget').dispatchEvent(new Event('input'))")
+    page.wait_for_timeout(1500)
+    page.click("#open-plan")
+    page.wait_for_timeout(4000)
+    for y in range(0, 2400, 120):
+        page.evaluate(f"document.getElementById('action').scrollTo(0, {y})")
+        page.wait_for_timeout(180)
+    page.wait_for_timeout(1500)
+    page.click("#ap-close")
+    page.select_option("#shed", "NC")
+    page.wait_for_timeout(5000)
+    page.click("#open-plan")
+    page.wait_for_timeout(4000)
+    page.evaluate("document.getElementById('action').scrollTo(0, 360)")
+    page.wait_for_timeout(5000)
+    page.click("#ap-close")
+    page.select_option("#shed", "06010105")
+    page.wait_for_timeout(3000)
     # a quick live interaction: drag the budget up, then open Methods
     for bi in [9, 11, 13, 15, 17]:
         page.evaluate(f"document.querySelector('#budget').value = {bi}; document.querySelector('#budget').dispatchEvent(new Event('input'))")
