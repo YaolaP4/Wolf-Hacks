@@ -22,7 +22,7 @@
 >
 > Click the lower culvert too if time allows. Mention Whiteoak Creek: two culverts that each score zero alone but open 9.6 miles together.
 
-**1:40 Flyover (the wow moment).** End the tour on Cherry Creek, click the culvert, then **Fly to this culvert**. Let two or three scenes play: the 3D crossing, the flood cross-section where the road overtops, and the glowing river traced upstream. Then press Esc.
+**1:40 Flyover.** End the tour on Cherry Creek, click the culvert, then **Fly to this culvert**. Let two or three scenes play: the 3D crossing, the flood cross-section where the road overtops, and the glowing river traced upstream. Then press Esc.
 
 **1:50 Step 4, rivers vs. roads**
 > "Now plan for roads too. A plan built only for washout risk gives up a third of the river benefit. A plan leaning 70/30 toward roads keeps 91% of the river gain and 94% of the washout reduction. Road and fish agencies mostly want the same culverts. If they plan separately, they leave value on the table."
@@ -69,4 +69,4 @@ Mostly waterfalls. The public download doesn't include them, so our networks run
 Most NC crossings have never been surveyed. The natural next step is to rank which ones to survey next by how much they could change the plan.
 
 **How did you use AI?**
-Claude and GPT, for ideation, code and writing. The README has the full disclosure: the prompts, how we tested model-written code, and how every number is produced by a script from public data.
+We chose the problem and approach and directed and reviewed every version. Claude Code wrote most of the code from our instructions, and GPT (through Hermes) gave a second opinion on ideas and wrote the flood diagram. Every number comes from scripts on public data, and the optimizer is tested against brute force. The README lists our prompts.

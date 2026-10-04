@@ -127,28 +127,55 @@ Raw data is fetched from public endpoints (see `notes/plan.md`). The NABI CSVs c
 
 ## AI usage
 
-WolfHacks requires teams to cite AI use. We used AI heavily, and this section says where and how we checked it.
+WolfHacks asks teams to cite AI use. We used AI tools heavily. We chose the problem and the approach, set the requirements, tested every version in the browser, and sent back changes. Claude Code wrote most of the code and text from those instructions. GPT, through Hermes, gave a second, independent set of ideas and wrote one module. Every number in the app is produced by scripts from public data and is tested.
 
 **Tools**
-- **Claude (Anthropic), through Claude Code:** idea generation; the data pipeline, optimizer, tests and web app code; and drafting this README and the DevPost text.
-- **GPT (OpenAI), through the Hermes agent CLI:** an independent second idea pool; two of the advisor and peer-reviewer seats in an idea "council"; and the animated flood cross-section module (`app/xsection.js`), written from our spec in `notes/xsection_spec.md` and then adjusted by us. We used two model families so one model's blind spots and self-preference would not decide the project. The full council transcript, prompts and outputs are in `ideation/council/`.
+- **Claude (Anthropic), through Claude Code:** ran the ideation workflow; wrote the data pipeline, optimizer, tests and web app; drafted this README and the DevPost text.
+- **GPT (OpenAI), through the Hermes agent CLI:** wrote an independent second idea pool; held two advisor seats and two peer-reviewer seats in the idea council; wrote the animated flood cross-section (`app/xsection.js`) from our spec in `notes/xsection_spec.md`, which we then adjusted.
 
-**How we chose the idea.** Each model wrote its own idea pool without seeing the other's (`ideation/claude_divergent.md`, `ideation/hermes_divergent_raw.md`). We verified every dataset against a live endpoint. Then a five-advisor council judged the source-blinded pool, and peer reviewers from both models critiqued it (`ideation/council/`). We picked the culvert idea from the three finalists in `ideation/PROPOSALS.md`.
+**What we decided**
+- **How to pick an idea.** We didn't want to take one model's first answer. We used a cross-model "LLM council," adapted from [llm-council](https://github.com/aiwithremy/claude-skills-llm-council), to reduce single-model bias and hallucinated datasets:
+  - Two model families generated ideas independently.
+  - Every dataset an idea depended on was checked against a live source.
+  - The ideas were judged with their source hidden.
 
-**Prompts we used** (excerpts; full text in the repo):
+  The record is in `ideation/`.
+- **The problem.** We chose undersized culverts from three finalists (`ideation/PROPOSALS.md`). Most people never think about culverts, so we framed the project around the road damage they cause in floods like Helene.
+- **What the tool should be.** After reviewing early versions, we felt the app explained the problem more than it solved it. So we asked for:
+  - the **action plan**: ranked projects, each with what to build, cost, benefit, reasons and next steps;
+  - **statewide budgeting**;
+  - the **flyover**, to show why a specific crossing fails and what the fix changes.
+- **Review and revisions.** We:
+  - rewrote captions we found unclear;
+  - asked for downstream barriers to be highlighted;
+  - fixed diagram labels that were cut off;
+  - asked for the site to work on phones and slow connections without losing features;
+  - rejected a color-theme redesign and reverted it.
 
-> "Approach this hackathon track from a different perspective… create a genuinely unique (not just a win hackathon type) of solution. Propose me 3 different potential ideas… use hermes… to get potentially different perspectives." (team to Claude)
+**Our prompts** (selected excerpts, edited for spelling and length):
 
-> "I like the culvert idea… make it into something presentable. A judge shouldn't look at it and be like 'it seems extremely specific and not high impact' since culverts aren't something people think about much at all, so frame it accordingly. Read the requirements exactly." (team to Claude)
+> "I'm linking the LLM Council repository to reduce a specific bias and hallucinations… Propose 3 different potential ideas. It should not be generic; ideally it's scalable and has an actual real-world application… You can also use Hermes (GPT) to get different perspectives."
 
-> "PART 1 – THE MODE. List the 15 project ideas that most teams in this track will predictably build… These are banned for Part 2. PART 2 – EIGHT IDEAS OUTSIDE THE MODE… Give the publisher and URL ONLY if you are confident it exists… otherwise write UNVERIFIED." (to GPT, `ideation/prompts/hermes_divergent.md`)
+> "I like the culvert idea and its application… Culverts aren't something people think about much at all, so frame it accordingly. Read the requirements exactly."
 
-> "You are The Contrarian on an LLM Council… Deliver your top 3 idea IDs… and the 2 ideas you would kill and the precise reason." (one of five advisor prompts, `ideation/council/prompt_*.md`)
+> "I want almost a video of whichever culvert we choose, like Street View in Google Maps. It should be detailed: show the reasons why the issues are there and why the proposed budget will help fix them."
+
+> "Make the captions for each flyover slide easier to understand. For some sections, like the fix, I don't understand what fix you're talking about. In the what's-below section, if it references another barrier, highlight that too so it's visible and obvious."
+
+> "The scale numbers and some of the text in those diagrams are on the edge and partially cut off. Make sure they're evenly spaced."
+
+> "The geospatial track is supposed to focus on software that finds a solution to these problems. The actual solutions should be somewhere in the app, since that's what we need to present. I'm concerned we haven't fully built the software to help and have instead created an interactive tutorial."
+
+> "Make the website friendlier for devices. Keep it exactly the same in features and look, but optimize it for lower bandwidth without sacrificing quality."
+
+> "For the river streams, make the points pulse a little so they're visible. Change the starting map color to green, so the flyover transitions straight from the map."
+
+The prompts the ideation workflow sent to the models were written from our brief. They are kept unedited in `ideation/prompts/` and `ideation/council/`.
 
 **How we checked AI-written work**
-- Model-written code was tested before any of its numbers went into the app. For example, testing against the inventory's own `min(upstream, downstream)` rule showed that a culvert above a short pocket (such as one under a dam) must be capped at what that pocket can hold. The final optimizer handles that cap exactly.
-- Two models picked ideas from their own pool even with sources hidden (GPT advisors 6/6, Claude advisors 8/9). So the final call weighted only points both families agreed on (see `ideation/PROPOSALS.md`).
-- Every figure in this repo is produced by a script in `pipeline/` from public data. The optimizer is checked against brute force, and the stream networks against the inventory.
+- Model-written code was tested before any of its numbers went into the app. For example, testing against the inventory's own `min(upstream, downstream)` rule showed that a culvert above a short pocket of river (such as one below a dam) must be capped at what that pocket can hold. The final optimizer handles that cap exactly.
+- The two model families favored their own ideas even with sources hidden (GPT advisors 6/6, Claude advisors 8/9). So the final choice weighted only the points both families agreed on (`ideation/PROPOSALS.md`).
+- Every figure is produced by a script in `pipeline/` from public data. The optimizer is checked against brute force (304 tests), the browser solver against Python (200 cases), and the rebuilt stream networks against the inventory.
 
 ## Team
 

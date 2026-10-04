@@ -106,4 +106,4 @@ python, geopandas, shapely, pyogrio, numpy, pandas, javascript, maplibre-gl, htm
 - Demo: run locally with `python -m http.server 8765 --directory app` (or the hosted link, if deployed)
 
 ## AI disclosure
-We used Claude (Claude Code) and GPT (through the Hermes agent) for ideation, code and writing. The README has the full AI-usage section with prompts and how we checked every number.
+We chose the problem and approach, set the requirements, and reviewed and revised every version. Claude Code wrote most of the code and text from our instructions. GPT, through the Hermes agent, gave an independent second set of ideas and wrote the flood cross-section module. The README's AI-usage section has our prompts and explains how every number was checked.
