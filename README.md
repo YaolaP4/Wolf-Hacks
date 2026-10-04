@@ -152,7 +152,7 @@ WolfHacks asks teams to cite AI use. We used AI tools heavily. We chose the prob
   - asked for the site to work on phones and slow connections without losing features;
   - rejected a color-theme redesign and reverted it.
 
-**Our prompts** (selected excerpts, edited for spelling and length):
+**Our prompts**:
 
 > "I'm linking the LLM Council repository to reduce a specific bias and hallucinations… Propose 3 different potential ideas. It should not be generic; ideally it's scalable and has an actual real-world application… You can also use Hermes (GPT) to get different perspectives."
 
@@ -170,7 +170,7 @@ WolfHacks asks teams to cite AI use. We used AI tools heavily. We chose the prob
 
 > "For the river streams, make the points pulse a little so they're visible. Change the starting map color to green, so the flyover transitions straight from the map."
 
-The prompts the ideation workflow sent to the models were written from our brief. They are kept unedited in `ideation/prompts/` and `ideation/council/`.
+The prompts the ideation workflow sent to the models were written from our brief
 
 **How we checked AI-written work**
 - Model-written code was tested before any of its numbers went into the app. For example, testing against the inventory's own `min(upstream, downstream)` rule showed that a culvert above a short pocket of river (such as one below a dam) must be capped at what that pocket can hold. The final optimizer handles that cap exactly.
