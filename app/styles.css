@@ -340,8 +340,8 @@ body.cinema .panel, body.cinema .legend, body.cinema .map-tools, body.cinema .ma
 .cine-pin-dot { width: 2px; height: 26px; margin-top: 2px; background: currentColor; }
 .cine-pin--this { color: #ffffff; }
 .cine-pin--this .cine-pin-label { background: #ffffff; color: #0f2a3a; }
-.cine-pin--amber { color: #f5a524; }
-.cine-pin--amber .cine-pin-label { background: #f5a524; color: #1f1400; }
+.cine-pin--amber { color: #ffbe1a; }
+.cine-pin--amber .cine-pin-label { background: #ffbe1a; color: #1f1400; }
 .cine.paused .cine-caption::after { content: "Paused"; margin-left: 10px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.18); font-size: 13px; vertical-align: middle; }
 .cine-xs-head, .cine-xs-note { color: #111111; }
 

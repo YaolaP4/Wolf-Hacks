@@ -315,8 +315,10 @@ export async function startFlyover(ctx) {
   map.addSource("cine-up-src", { type: "geojson", data: empty });
   map.addSource("cine-below-src", { type: "geojson", data: empty });
   map.addLayer({ id: "cine-up", type: "line", source: "cine-up-src", layout: { "line-cap": "round" }, paint: { "line-color": "#62d5ff", "line-width": w(2.2), "line-opacity": 0.95 } }, "culverts");
-  map.addLayer({ id: "cine-below-glow", type: "line", source: "cine-below-src", layout: { "line-cap": "round" }, paint: { "line-color": AMBER, "line-width": w(7), "line-blur": 5, "line-opacity": 0.55 } }, "culverts");
-  map.addLayer({ id: "cine-below", type: "line", source: "cine-below-src", layout: { "line-cap": "round" }, paint: { "line-color": AMBER, "line-width": w(2.6) } }, "culverts");
+  // Downstream highlight: dark outline for contrast on satellite, a wide warm glow, a bright core.
+  map.addLayer({ id: "cine-below-case", type: "line", source: "cine-below-src", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#2a1a00", "line-width": w(5.2), "line-opacity": 0.55 } }, "culverts");
+  map.addLayer({ id: "cine-below-glow", type: "line", source: "cine-below-src", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffc93c", "line-width": w(11), "line-blur": 6, "line-opacity": 0.8 } }, "culverts");
+  map.addLayer({ id: "cine-below", type: "line", source: "cine-below-src", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffbe1a", "line-width": w(3.6) } }, "culverts");
   const showUp = (on) => map.getSource("cine-up-src")?.setData(on ? upData : empty);
   const showBelow = (on) => map.getSource("cine-below-src")?.setData(on ? belowData : empty);
   if (path) {
@@ -355,7 +357,7 @@ export async function startFlyover(ctx) {
     ui.root.classList.remove("paused");
     document.body.classList.remove("cinema");
     clearMarks(); thisPin.remove();
-    for (const id of ["trace", "trace-glow", "cine-up", "cine-below", "cine-below-glow"]) if (map.getLayer(id)) map.removeLayer(id);
+    for (const id of ["trace", "trace-glow", "cine-up", "cine-below", "cine-below-glow", "cine-below-case"]) if (map.getLayer(id)) map.removeLayer(id);
     for (const id of ["trace", "cine-up-src", "cine-below-src"]) if (map.getSource(id)) map.removeSource(id);
     if (map.getLayer("sat")) map.removeLayer("sat");
     if (map.setCenterElevation) map.setCenterElevation(0);
