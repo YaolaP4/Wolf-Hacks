@@ -127,7 +127,7 @@ Raw data is fetched from public endpoints (see `notes/plan.md`). The NABI CSVs c
 
 ## AI usage
 
-WolfHacks asks teams to cite AI use. We used AI tools heavily. We chose the problem and the approach, set the requirements, tested every version in the browser, and sent back changes. Claude Code wrote most of the code and text from those instructions. GPT, through Hermes, gave a second, independent set of ideas and wrote one module. Every number in the app is produced by scripts from public data and is tested.
+WolfHacks asks teams to cite AI use. We used AI tools. We chose the problem and the approach, set the requirements, tested every version in the browser, and sent back changes. Claude Code wrote most of the code and text from those instructions. GPT, through Hermes, gave a second, independent set of ideas and wrote one module. Every number in the app is produced by scripts from public data and is tested.
 
 **Tools**
 - **Claude (Anthropic), through Claude Code:** ran the ideation workflow; wrote the data pipeline, optimizer, tests and web app; drafted this README and the DevPost text.
